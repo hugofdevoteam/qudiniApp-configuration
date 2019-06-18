@@ -7,3 +7,6 @@ qudiniAppStaticData:
   user: "sysadmin"
   password: "Passphrase01"
 
+requestStaticValues:
+  defaultCharSet: "UTF-8"
+

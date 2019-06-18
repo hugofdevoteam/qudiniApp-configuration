@@ -57,6 +57,11 @@
             <artifactId>xstream</artifactId>
             <version>1.4.11.1</version>
         </dependency>
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>1.6</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -73,7 +78,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>${exec-maven-plugin.version}</version>
                 <configuration>
-                    <mainClass>com.qudini.QudiniAppConfGenerator</mainClass>
+                    <mainClass>com.qudini.QudiniAppConfDataGenerator</mainClass>
                 </configuration>
             </plugin>
         </plugins>

@@ -1,6 +1,8 @@
 package com.qudini.api;
 
 import com.thoughtworks.xstream.core.util.Base64Encoder;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -23,44 +25,49 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.qudini.configuration.GlobalConfiguration.configuration;
 
+@Slf4j
 public class RequestSender {
 
-
-
-    private String appUrl = configuration.getQudiniAppStaticData().getBaseuri();
-    private String admin_username = configuration.getQudiniAppStaticData().getUser();
-    private String admin_password = configuration.getQudiniAppStaticData().getPassword();
-    private String encoding = getEncoding(admin_username, admin_password);
+    private static String baseUri = configuration.getQudiniAppStaticData().getBaseuri();
+    private static String adminUsername = configuration.getQudiniAppStaticData().getUser();
+    private static String adminPassword = configuration.getQudiniAppStaticData().getPassword();
+    private static String defaultCharSet = configuration.getRequestStaticValues().getDefaultCharSet();
+    private static String encoding = getEncoding(adminUsername, adminPassword);
     private static CookieStore cookies;
 
 
-    protected String sendPost(String path, List<NameValuePair> params) {
+    protected String sendPost(String resourcesUri, List<NameValuePair> params) throws UnsupportedEncodingException{
 
-        HttpPost httppost = new HttpPost(appUrl + path);
+        HttpPost httppost = httpPostBaseSpecification(baseUri + resourcesUri);
 
-        httppost.addHeader("Authorization", "Basic " + encoding);
         httppost.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
         try {
-            httppost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+            httppost.setEntity(new UrlEncodedFormEntity(params, defaultCharSet));
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+
+            log.error(String.format("Unsupported encoding for %s", params
+                    .stream()
+                    .map(p -> new HashMap<>().put(p.getName(), p.getValue()))
+                    .collect(Collectors.toList())
+                    .toString()));
+
+            throw e;
         }
 
-        String responseString = executeRequest(httppost, false);
+        return executeRequest(httppost, false);
 
-        return responseString;
     }
 
-    protected String sendPost(String path) {
+    protected String sendPost(String resourcesUri) {
 
-        HttpPost httppost = new HttpPost(appUrl + path);
-
-        httppost.addHeader("Authorization", "Basic " + encoding);
+        HttpPost httppost = httpPostBaseSpecification(baseUri + resourcesUri);
 
         try {
             httppost.setEntity(new StringEntity("{}"));
@@ -68,9 +75,16 @@ public class RequestSender {
             e.printStackTrace();
         }
 
-        String responseString = executeRequest(httppost, false);
+        return executeRequest(httppost, false);
+    }
 
-        return responseString;
+    protected String sendPost(String path, String params, boolean withCookies) {
+
+        HttpPost httpPost;
+        httpPost = httpPostBaseSpecification(path);
+        httpPost.setEntity(new StringEntity(params, defaultCharSet));
+
+        return executeRequest(httpPost, withCookies);
     }
 
     protected String sendPost(String path, String params) {
@@ -79,10 +93,10 @@ public class RequestSender {
         if (path.contains("https:")) {
             httppost = new HttpPost(path);
             httppost.addHeader("Content-Type", "application/json");
-        } else httppost = new HttpPost(appUrl + path);
+        } else httppost = new HttpPost(baseUri + path);
 
-        httppost.addHeader("Authorization", "Basic " + encoding);
-        httppost.setEntity(new StringEntity(params, "UTF-8"));
+        //httppost.addHeader("Authorization", "Basic " + encoding);
+        httppost.setEntity(new StringEntity(params, defaultCharSet));
 
         String responseString = executeRequest(httppost, false);
 
@@ -95,7 +109,7 @@ public class RequestSender {
         if (path.contains("https:")) {
             httpGet = new HttpGet(path);
         } else {
-            httpGet = new HttpGet(appUrl + path);
+            httpGet = new HttpGet(baseUri + path);
         }
 
         httpGet.addHeader("Authorization", "Basic " + encoding);
@@ -106,18 +120,13 @@ public class RequestSender {
     }
 
     protected String sendDelete(String path) {
-        HttpDelete httpDelete = new HttpDelete(appUrl + path);
+        HttpDelete httpDelete = new HttpDelete(baseUri + path);
 
         httpDelete.addHeader("Authorization", "Basic " + encoding);
 
         String responseString = executeRequest(httpDelete, false);
 
         return responseString;
-    }
-
-    private String getEncoding(String userName, String password) {
-        String encoding = new Base64Encoder().encode((userName + ":" + password).getBytes()).replaceAll("(?:\\r\\n|\\n\\r|\\n|\\r)", "");
-        return encoding;
     }
 
     private String executeRequest(HttpUriRequest request, boolean withCookies) {
@@ -166,7 +175,7 @@ public class RequestSender {
 
     protected String sendPut(String path, List<NameValuePair> params) {
 
-        HttpPut httpput = new HttpPut(appUrl + path);
+        HttpPut httpput = new HttpPut(baseUri + path);
 
         httpput.addHeader("Authorization", "Basic " + encoding);
         httpput.addHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -188,7 +197,7 @@ public class RequestSender {
         if (path.contains("https:")) {
             httpput = new HttpPut(path);
             httpput.addHeader("Content-Type", "application/json");
-        } else httpput = new HttpPut(appUrl + path);
+        } else httpput = new HttpPut(baseUri + path);
 
         httpput.addHeader("Authorization", "Basic " + encoding);
 
@@ -199,17 +208,56 @@ public class RequestSender {
         return responseString;
     }
 
-    protected String sendPost(String path, String params, boolean withCookies) {
+    // private methods
 
-        HttpPost httppost;
-        if (path.contains("https:")) {
-            httppost = new HttpPost(path);
-            httppost.addHeader("Content-Type", "application/json");
-        } else httppost = new HttpPost(appUrl + path);
-
-        httppost.addHeader("Authorization", "Basic " + encoding);
-        httppost.setEntity(new StringEntity(params, "UTF-8"));
-
-        return executeRequest(httppost, withCookies);
+    private static String getEncoding(String userName, String password) {
+        return new Base64Encoder().encode((userName + ":" + password).getBytes()).replaceAll("(?:\\r\\n|\\n\\r|\\n|\\r)", "");
     }
+
+    private HttpPost httpPostBaseSpecification(String url){
+
+        HttpPost httpPost;
+
+        if (isValidateUrl(url) && url.toLowerCase().startsWith("https:")) {
+
+            log.debug("using SSL/TLS encrypted connection for POST request specification");
+
+            httpPost = new HttpPost(url);
+
+            httpPost.addHeader("Content-Type", "application/json");
+
+        } else if (isValidateUrl(url) && url.toLowerCase().startsWith("http:")){
+
+            log.debug("using unencrypted connection for POST request specification");
+
+            httpPost = new HttpPost(baseUri + url);
+
+        } else{
+
+            log.error(String.format("The provided URL %s does seem to be valid", url));
+
+            throw new RuntimeException();
+
+        }
+
+        httpPost.addHeader("Authorization", "Basic " + encoding);
+
+        return httpPost;
+
+    }
+
+    private HttpPost httpPostBaseSpecification(String url, String params){
+        HttpPost httpPost = httpPostBaseSpecification(url);
+
+        httpPost.setEntity(new StringEntity(params, "UTF-8"));
+
+        return httpPost;
+    }
+
+    private boolean isValidateUrl(String path){
+        UrlValidator urlValidator = new UrlValidator();
+        return urlValidator.isValid(path);
+    }
+
+
 }

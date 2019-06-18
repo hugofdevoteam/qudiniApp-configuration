@@ -6,3 +6,6 @@ qudiniAppStaticData:
   baseuri: https://localhost:8081/
   user: "teste"
   password: "teste"
+
+requestStaticValues:
+  defaultCharSet: "UTF-8"

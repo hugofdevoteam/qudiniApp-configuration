@@ -53,7 +53,7 @@ public class GlobalConfiguration {
 
     private static void setEnv() {
 
-        String env = System.getProperty(ENV);
+        String env = getEnv();
 
         if (env == null || env.isEmpty()) {
             log.warn("Missing setup for ENV property. Using local com.qudini.configuration property as default Environment");
@@ -68,7 +68,11 @@ public class GlobalConfiguration {
             log.error("Wrong value for " + env + " property. The value as inputted was '" + env + "'");
             throw new ExceptionInInitializerError("Wrong value for " + GlobalConfiguration.ENV + " property. The value as inputted was '" + env + "'");
         }
-        log.info("Running tests for Environment: " + env.toUpperCase());
+    }
+
+    public static String getEnv(){
+
+        return System.getProperty(ENV);
     }
 
 

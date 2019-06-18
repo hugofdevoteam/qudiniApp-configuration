@@ -9,4 +9,6 @@ public class YamlConfigurations {
 
     private QudiniAppStaticData qudiniAppStaticData;
 
+    private RequestStaticValues requestStaticValues;
+
 }
