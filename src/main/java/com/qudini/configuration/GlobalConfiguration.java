@@ -1,8 +1,8 @@
-package configuration;
+package com.qudini.configuration;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import configuration.model.YamlConfigurations;
+import com.qudini.configuration.model.YamlConfigurations;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
@@ -37,7 +37,7 @@ public class GlobalConfiguration {
                             "src",
                             "main",
                             "resources",
-                            "configuration-" + System.getProperty(ENV) + ".yaml"))
+                            "com.qudini.configuration-" + System.getProperty(ENV) + ".yaml"))
         ) {
 
             configuration = new Yaml().loadAs(inputStream, YamlConfigurations.class);
@@ -56,7 +56,7 @@ public class GlobalConfiguration {
         String env = System.getProperty(ENV);
 
         if (env == null || env.isEmpty()) {
-            log.warn("Missing setup for ENV property. Using local configuration property as default Environment");
+            log.warn("Missing setup for ENV property. Using local com.qudini.configuration property as default Environment");
             System.setProperty(GlobalConfiguration.ENV, "local");
             env = System.getProperty(GlobalConfiguration.ENV);
         }

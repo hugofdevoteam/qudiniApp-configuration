@@ -1,4 +1,4 @@
-package configuration.model;
+package com.qudini.configuration.model;
 
 import lombok.Data;
 

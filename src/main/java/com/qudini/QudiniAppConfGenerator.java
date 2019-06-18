@@ -1,0 +1,10 @@
+package com.qudini;
+
+public class QudiniAppConfGenerator {
+
+    public static void main(String args[]) {
+
+        System.out.println("Hello, World");
+
+    }
+}

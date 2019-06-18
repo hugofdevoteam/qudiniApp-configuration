@@ -1,8 +1,6 @@
-package configuration.model;
+package com.qudini.configuration.model;
 
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 @Data
 public class Meta {
