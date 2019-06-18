@@ -1,0 +1,9 @@
+meta:
+  configurationVersion: 0.1
+  released: 2019-05-17
+
+qudiniAppStaticData:
+  url: https://localhost:8080/
+  user: "sysadmin"
+  password: "Passphrase01"
+
