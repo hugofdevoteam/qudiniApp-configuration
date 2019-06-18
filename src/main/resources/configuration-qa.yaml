@@ -3,6 +3,6 @@ meta:
   released: 2019-05-17
 
 qudiniAppStaticData:
-  url: https://localhost:8082/
+  baseuri: https://localhost:8082/
   user: "teste"
   password: "teste"

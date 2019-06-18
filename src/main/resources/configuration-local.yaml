@@ -3,7 +3,7 @@ meta:
   released: 2019-05-17
 
 qudiniAppStaticData:
-  url: https://localhost:8080/
+  baseuri: https://localhost:8080/
   user: "sysadmin"
   password: "Passphrase01"
 

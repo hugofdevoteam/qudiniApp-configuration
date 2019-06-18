@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class QudiniAppStaticData {
 
-    private String url;
+    private String baseuri;
 
     private String user;
 

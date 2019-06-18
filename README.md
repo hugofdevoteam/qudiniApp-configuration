@@ -1,4 +1,4 @@
-# qudiniapp-com.qudini.configuration-generator
+# qudiniApp-configuration-data-generator
 
 ## Project motivation:
 

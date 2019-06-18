@@ -37,7 +37,7 @@ public class GlobalConfiguration {
                             "src",
                             "main",
                             "resources",
-                            "com.qudini.configuration-" + System.getProperty(ENV) + ".yaml"))
+                            "configuration-" + System.getProperty(ENV) + ".yaml"))
         ) {
 
             configuration = new Yaml().loadAs(inputStream, YamlConfigurations.class);
