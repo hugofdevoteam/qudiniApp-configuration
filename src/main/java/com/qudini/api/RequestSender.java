@@ -3,58 +3,99 @@ package com.qudini.api;
 import com.thoughtworks.xstream.core.util.Base64Encoder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.validator.routines.UrlValidator;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
+import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
-import static com.qudini.configuration.GlobalConfiguration.configuration;
 
 @Slf4j
 public class RequestSender {
 
-    private static String baseUri = configuration.getQudiniAppStaticData().getBaseuri();
-    private static String adminUsername = configuration.getQudiniAppStaticData().getUser();
-    private static String adminPassword = configuration.getQudiniAppStaticData().getPassword();
-    private static String defaultCharSet = configuration.getRequestStaticValues().getDefaultCharSet();
-    private static String encoding = getEncoding(adminUsername, adminPassword);
+
+    // MUST BE REMOVED FROM HERE - THIS MAY BECOME A LIB AND WILL NOT BE DEPENDENT OF THIS
+//    private static String baseUri = configuration.getQudiniAppStaticData().getBaseuri();
+//    private static String adminUsername = configuration.getQudiniAppStaticData().getUser();
+//    private static String adminPassword = configuration.getQudiniAppStaticData().getPassword();
+//    private static String defaultCharSet = configuration.getRequestStaticValues().getDefaultCharSet();
+//    private static String encoding = getEncoding(adminUsername, adminPassword);
     private static CookieStore cookies;
 
 
-    protected String sendPost(String resourcesUri, List<NameValuePair> params) throws UnsupportedEncodingException{
+    // PUBLIC METHODS
 
-        HttpPost httppost = httpPostBaseSpecification(baseUri + resourcesUri);
+    /**
+     * Generates the access token for qudiniApp
+     *
+     * @param userName the username
+     * @param password the password in plain text
+     * @return token string
+     */
+    public String generateQudiniAppToken(String userName, String password) {
 
-        httppost.addHeader("Content-Type", "application/x-www-form-urlencoded");
+        return new Base64Encoder()
+                .encode(
+                        String.format("%s : %s", userName, password)
+                                .getBytes())
+                .replaceAll("(?:\\r\\n|\\n\\r|\\n|\\r)", "");
+
+    }
+
+    // PROTECTED METHODS
+
+    // -- POST REQUEST -- //
+
+    /**
+     * Executes a post request with form parameters provided as a list of NameValuePair
+     *
+     * @param url The full url that should be called
+     * @param token The generated authorization token
+     * @param paramsAsNameValuePair list of form key-value object
+     * @param charSet the charset
+     * @return the response as string of the executed request
+     * @throws UnsupportedEncodingException
+     */
+    protected String sendPost(
+            String url,
+            String token,
+            List<NameValuePair> paramsAsNameValuePair,
+            String charSet)
+            throws UnsupportedEncodingException{
+
+        HttpPost httppost = httpPostBaseSpecification(url,"application/x-www-form-urlencoded", token);
 
         try {
-            httppost.setEntity(new UrlEncodedFormEntity(params, defaultCharSet));
+            httppost.setEntity(new UrlEncodedFormEntity(paramsAsNameValuePair, charSet));
         } catch (UnsupportedEncodingException e) {
 
-            log.error(String.format("Unsupported encoding for %s", params
+            log.error(String.format("Unsupported encoding for %s", paramsAsNameValuePair
                     .stream()
-                    .map(p -> new HashMap<>().put(p.getName(), p.getValue()))
+                    .map(p -> new HashMap<String,String>().put(p.getName(), p.getValue()))
                     .collect(Collectors.toList())
                     .toString()));
 
@@ -65,198 +106,380 @@ public class RequestSender {
 
     }
 
-    protected String sendPost(String resourcesUri) {
+    /**
+     * Sends a post request with an empty payload object
+     *
+     * @param url The full path url
+     * @param contentType the content type of the send payload
+     * @param token the access token
+     * @return the response as string of the executed request
+     * @throws UnsupportedEncodingException
+     */
+    protected String sendPost(
+            String url,
+            String contentType,
+            String token)
+            throws UnsupportedEncodingException {
 
-        HttpPost httppost = httpPostBaseSpecification(baseUri + resourcesUri);
+        HttpPost httppost = httpPostBaseSpecification(url, contentType, token);
 
         try {
             httppost.setEntity(new StringEntity("{}"));
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+
+            log.error("Could not set payload to \\{\\}");
+
+            throw e;
         }
 
         return executeRequest(httppost, false);
     }
 
-    protected String sendPost(String path, String params, boolean withCookies) {
+    /**
+     * Executes a post request allowing to activate cookies
+     *
+     * @param url The full url called
+     * @param contentType The content type header value
+     * @param token The generated authorization token
+     * @param paramsAsString the payload parameters as string
+     * @param charSet the charset
+     * @param withCookies cookies switch
+     * @return the response as string of the executed request
+     */
+    protected String sendPost(
+            String url,
+            String contentType,
+            String token,
+            String paramsAsString,
+            String charSet,
+            boolean withCookies) {
 
         HttpPost httpPost;
-        httpPost = httpPostBaseSpecification(path);
-        httpPost.setEntity(new StringEntity(params, defaultCharSet));
+        httpPost = httpPostBaseSpecification(url, contentType, token, paramsAsString, charSet);
 
         return executeRequest(httpPost, withCookies);
     }
 
-    protected String sendPost(String path, String params) {
+    /**
+     * Overload of method {@link #sendPost(String, String, String, String, String, boolean) sendPost}
+     * setting the with cookies switch to off (false)
+     *
+     * @param url The full url called
+     * @param contentType The content type header value
+     * @param token The generated authorization token
+     * @param paramsAsString the payload parameters as string
+     * @param charSet the charset
+     * @return the response as string of the executed request
+     */
+    protected String sendPost(
+            String url,
+            String contentType,
+            String token,
+            String paramsAsString,
+            String charSet) {
 
-        HttpPost httppost;
-        if (path.contains("https:")) {
-            httppost = new HttpPost(path);
-            httppost.addHeader("Content-Type", "application/json");
-        } else httppost = new HttpPost(baseUri + path);
+        HttpPost httpPost;
+        httpPost = httpPostBaseSpecification(url, contentType, token, paramsAsString, charSet);
 
-        //httppost.addHeader("Authorization", "Basic " + encoding);
-        httppost.setEntity(new StringEntity(params, defaultCharSet));
+        return executeRequest(httpPost, false);
 
-        String responseString = executeRequest(httppost, false);
-
-        return responseString;
     }
 
-    protected String sendGet(String path, String userName, String password) {
-        String encoding = getEncoding(userName, password);
-        HttpGet httpGet;
-        if (path.contains("https:")) {
-            httpGet = new HttpGet(path);
-        } else {
-            httpGet = new HttpGet(baseUri + path);
+    // -- PUT REQUEST -- //
+
+    protected String sendPut(
+            String url,
+            String token,
+            List<NameValuePair> paramsAsNameValuePair,
+            String charSet)
+            throws UnsupportedEncodingException{
+
+        HttpPut httpPut = httpPutBaseSpecification(url,"application/x-www-form-urlencoded", token);
+
+        try {
+            httpPut.setEntity(new UrlEncodedFormEntity(paramsAsNameValuePair, charSet));
+        } catch (UnsupportedEncodingException e) {
+
+            log.error(String.format("Unsupported encoding for %s", paramsAsNameValuePair
+                    .stream()
+                    .map(p -> new HashMap<String,String>().put(p.getName(), p.getValue()))
+                    .collect(Collectors.toList())
+                    .toString()));
+
+            throw e;
         }
 
-        httpGet.addHeader("Authorization", "Basic " + encoding);
+        return executeRequest(httpPut, false);
 
-        String responseString = executeRequest(httpGet, false);
-
-        return responseString;
     }
 
-    protected String sendDelete(String path) {
-        HttpDelete httpDelete = new HttpDelete(baseUri + path);
+    protected String sendPut(
+            String url,
+            String contentType,
+            String token,
+            String paramsAsString,
+            String charSet) {
 
-        httpDelete.addHeader("Authorization", "Basic " + encoding);
+        HttpPut httpPut;
+        httpPut = httpPutBaseSpecification(url, contentType, token, paramsAsString, charSet);
 
-        String responseString = executeRequest(httpDelete, false);
+        return executeRequest(httpPut, false);
 
-        return responseString;
     }
+
+
+    // -- GET REQUESTS -- //
+
+    protected String sendGet(String url, String token) {
+
+        HttpGet httpGet = httpGetBaseSpecification(url, token);
+
+        return executeRequest(httpGet, false);
+    }
+
+    // -- DELETE REQUESTS -- //
+
+    protected String sendDelete(String url, String token) {
+
+        HttpDelete httpDelete = httpDeleteBaseSpecification(url, token);
+
+        return executeRequest(httpDelete, false);
+
+    }
+
+
+    // PRIVATE METHODS
 
     private String executeRequest(HttpUriRequest request, boolean withCookies) {
-        TrustStrategy acceptingTrustStrategy = (cert, authType) -> true;
-        SSLSocketFactory sf;
-        String responseString = null;
 
-        try {
-            sf = new SSLSocketFactory(
-                    acceptingTrustStrategy, SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-            SchemeRegistry registry = new SchemeRegistry();
+        Map<String, String> decomposedResponse = new HashMap<>();
 
-            registry.register(new Scheme("https", 8443, sf));
+        String responseAsStringKey = "responseAsString";
 
-            ClientConnectionManager ccm = new PoolingClientConnectionManager(registry);
+        try{
 
-            DefaultHttpClient httpclient = new DefaultHttpClient(ccm);
+            TrustStrategy acceptingTrustStrategy = (cert, authType) -> true;
 
-            if (withCookies) {
-                httpclient.setCookieStore(cookies);
+            SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(null, acceptingTrustStrategy).build();
+
+            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+
+            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory> create()
+                    .register("https", sslsf)
+                    .register("http", new PlainConnectionSocketFactory())
+                    .build();
+
+            try (BasicHttpClientConnectionManager connectionManager = new BasicHttpClientConnectionManager(socketFactoryRegistry)) {
+
+
+                if (withCookies) {
+                    CloseableHttpClient httpClient = HttpClients
+                            .custom()
+                            .setSSLSocketFactory(sslsf)
+                            .setConnectionManager(connectionManager)
+                            .setDefaultCookieStore(cookies)
+                            .build();
+
+                    HttpClientContext context = HttpClientContext.create();
+
+                    CloseableHttpResponse httpResponse = httpClient.execute(request, context);
+
+                    cookies = context.getCookieStore();
+
+                    decomposedResponse = httpResponseDecomposer(httpResponse);
+
+                    httpResponse.close();
+
+                } else {
+                    CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).setConnectionManager(connectionManager).build();
+
+                    CloseableHttpResponse httpResponse = httpClient.execute(request);
+
+                    decomposedResponse = httpResponseDecomposer(httpResponse);
+
+                    httpResponse.close();
+                }
             }
 
-            //Execute and get the response.
-            HttpResponse response = httpclient.execute(request);
-            HttpEntity entity = response.getEntity();
 
-            // get cookies
-            cookies = httpclient.getCookieStore();
+        }catch (NoSuchAlgorithmException | IOException | KeyManagementException | KeyStoreException e){
 
-            responseString = EntityUtils.toString(entity);
+            log.error("An exception has occurred while making the intended requests, see stack trace for more details");
 
-            System.out.println("********Status Code************");
-            System.out.println(response.getStatusLine());
-            System.out.println("*******************************");
-            System.out.println("********************************************");
-            System.out.println(responseString);
-            System.out.println("********************************************");
-            System.out.println();
+            log.error(e.toString());
 
-        } catch (NoSuchAlgorithmException | IOException | UnrecoverableKeyException | KeyManagementException | KeyStoreException e) {
-            e.printStackTrace();
         }
 
-        return responseString;
+        return decomposedResponse.get(responseAsStringKey);
+
     }
 
-    protected String sendPut(String path, List<NameValuePair> params) {
 
-        HttpPut httpput = new HttpPut(baseUri + path);
-
-        httpput.addHeader("Authorization", "Basic " + encoding);
-        httpput.addHeader("Content-Type", "application/x-www-form-urlencoded");
-
-        try {
-            httpput.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        String responseString = executeRequest(httpput, false);
-
-        return responseString;
-    }
-
-    protected String sendPut(String path, String params) {
-
-        HttpPut httpput;
-        if (path.contains("https:")) {
-            httpput = new HttpPut(path);
-            httpput.addHeader("Content-Type", "application/json");
-        } else httpput = new HttpPut(baseUri + path);
-
-        httpput.addHeader("Authorization", "Basic " + encoding);
-
-        httpput.setEntity(new StringEntity(params, "UTF-8"));
-
-        String responseString = executeRequest(httpput, false);
-
-        return responseString;
-    }
-
-    // private methods
-
-    private static String getEncoding(String userName, String password) {
-        return new Base64Encoder().encode((userName + ":" + password).getBytes()).replaceAll("(?:\\r\\n|\\n\\r|\\n|\\r)", "");
-    }
-
-    private HttpPost httpPostBaseSpecification(String url){
+    private HttpPost httpPostBaseSpecification(String url, String contentType, String token){
 
         HttpPost httpPost;
 
-        if (isValidateUrl(url) && url.toLowerCase().startsWith("https:")) {
-
-            log.debug("using SSL/TLS encrypted connection for POST request specification");
+        if (isValidateUrl(url)) {
 
             httpPost = new HttpPost(url);
 
-            httpPost.addHeader("Content-Type", "application/json");
+            httpPost.addHeader("Content-Type", contentType);
 
-        } else if (isValidateUrl(url) && url.toLowerCase().startsWith("http:")){
+            httpPost.addHeader("Authorization", "Basic " + token);
 
-            log.debug("using unencrypted connection for POST request specification");
+            log.debug("Generated base http POST specification");
 
-            httpPost = new HttpPost(baseUri + url);
 
         } else{
 
-            log.error(String.format("The provided URL %s does seem to be valid", url));
+            log.error(String.format("The provided URL [ %s ] does seem to be a valid URL", url));
 
             throw new RuntimeException();
 
         }
 
-        httpPost.addHeader("Authorization", "Basic " + encoding);
-
         return httpPost;
 
     }
 
-    private HttpPost httpPostBaseSpecification(String url, String params){
-        HttpPost httpPost = httpPostBaseSpecification(url);
+    private HttpPost httpPostBaseSpecification(String url, String contentType, String token, String paramsAsString, String charSet) {
+        HttpPost httpPost = httpPostBaseSpecification(url, contentType, token);
+        try{
+            httpPost.setEntity(new StringEntity(paramsAsString, charSet));
+        }catch (UnsupportedCharsetException e){
+            log.error(String.format("The charset [%s] is not valid or cannot be applied to the payload", charSet));
 
-        httpPost.setEntity(new StringEntity(params, "UTF-8"));
+            throw e;
+        }
+
 
         return httpPost;
     }
 
-    private boolean isValidateUrl(String path){
+    private HttpPut httpPutBaseSpecification(String url, String contentType, String token){
+
+        HttpPut httpPut;
+
+        if (isValidateUrl(url)) {
+
+            httpPut = new HttpPut(url);
+
+            httpPut.addHeader("Content-Type", contentType);
+
+            httpPut.addHeader("Authorization", "Basic " + token);
+
+            log.debug("Generated base http PUT specification");
+
+
+        } else{
+
+            log.error(String.format("The provided URL [ %s ] does seem to be a valid URL", url));
+
+            throw new RuntimeException();
+
+        }
+
+        return httpPut;
+
+    }
+
+    private HttpPut httpPutBaseSpecification(String url, String contentType, String token, String paramsAsString, String charSet) {
+        HttpPut httpPut = httpPutBaseSpecification(url, contentType, token);
+        try{
+            httpPut.setEntity(new StringEntity(paramsAsString, charSet));
+        }catch (UnsupportedCharsetException e){
+            log.error(String.format("The charset [%s] is not valid or cannot be applied to the payload", charSet));
+
+            throw e;
+        }
+
+
+        return httpPut;
+    }
+
+    private HttpGet httpGetBaseSpecification(String url, String token){
+
+        HttpGet httpGet;
+
+        if (isValidateUrl(url)) {
+
+            httpGet = new HttpGet(url);
+
+            httpGet.addHeader("Authorization", "Basic " + token);
+
+            log.debug("Generated base http GET specification");
+
+        }else{
+
+            log.error(String.format("The provided URL [ %s ] does seem to be a valid URL", url));
+
+            throw new RuntimeException();
+        }
+
+        return httpGet;
+
+    }
+
+
+    private HttpDelete httpDeleteBaseSpecification(String url, String token){
+
+        HttpDelete httpDelete;
+
+        if (isValidateUrl(url)) {
+
+            httpDelete = new HttpDelete(url);
+
+            httpDelete.addHeader("Authorization", "Basic " + token);
+
+            log.debug("Generated base http DELETE specification");
+
+        }else{
+
+            log.error(String.format("The provided URL [ %s ] does seem to be a valid URL", url));
+
+            throw new RuntimeException();
+        }
+
+        return httpDelete;
+
+    }
+
+
+    private boolean isValidateUrl(String url){
         UrlValidator urlValidator = new UrlValidator();
-        return urlValidator.isValid(path);
+        return urlValidator.isValid(url);
+    }
+
+    private Map<String, String> httpResponseDecomposer(CloseableHttpResponse httpResponse) throws IOException {
+
+        final String statusCode = "statusCode";
+
+        final String responseAsString = "responseAsString";
+
+        Map<String, String> responseObj = new HashMap<>();
+
+        responseObj.put(statusCode, String.valueOf(httpResponse.getStatusLine().getStatusCode()));
+
+        responseObj.put(responseAsString, EntityUtils.toString(httpResponse.getEntity()));
+
+
+        if (Integer.valueOf(responseObj.get(statusCode)) >= 200 && Integer.valueOf(responseObj.get(statusCode)) < 300){
+
+            log.info(String.format("Request was successful - status code: %s ", statusCode));
+
+        } else if (Integer.valueOf(responseObj.get(statusCode)) >= 400 && Integer.valueOf(responseObj.get(statusCode)) < 500){
+
+            log.warn(String.format("Request was not successful - client side problem - status code: %s", statusCode));
+            log.warn(String.format("The data insertion may have been compromised, the obtained response body is: %n%s", responseAsString));
+
+        } else if (Integer.valueOf(responseObj.get(statusCode)) >= 500){
+
+            log.warn(String.format("Request was not successful - Server side problem - status code: %s", statusCode));
+            log.warn(String.format("The data insertion may have been compromised, the obtained response body is: %n%s", responseAsString));
+
+        }
+
+        return responseObj;
     }
 
 
