@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.qudini</groupId>
-    <artifactId>qudiniapp-configuration-data-generator</artifactId>
+    <artifactId>qudiniapp-data-generator</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
@@ -11,6 +11,7 @@
         <lombok.version>1.18.8</lombok.version>
         <httpclient.version>4.5.9</httpclient.version>
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
+        <apache-common-csv.version>1.7</apache-common-csv.version>
 
         <maven.failsafe.plugin.version>2.18</maven.failsafe.plugin.version>
         <maven.compiler.plugin.version>3.2</maven.compiler.plugin.version>
@@ -62,6 +63,11 @@
             <artifactId>commons-validator</artifactId>
             <version>1.6</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>${apache-common-csv.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -78,7 +84,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>${exec-maven-plugin.version}</version>
                 <configuration>
-                    <mainClass>com.qudini.QudiniAppConfDataGenerator</mainClass>
+                    <mainClass>com.qudini.QudiniAppDataGenerator</mainClass>
                 </configuration>
             </plugin>
         </plugins>
