@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
@@ -60,7 +62,7 @@ public class RequestSender {
 
         return new Base64Encoder()
                 .encode(
-                        String.format("%s : %s", userName, password)
+                        String.format("%s:%s", userName, password)
                                 .getBytes())
                 .replaceAll("(?:\\r\\n|\\n\\r|\\n|\\r)", "");
 
@@ -278,6 +280,8 @@ public class RequestSender {
                             .setSSLSocketFactory(sslsf)
                             .setConnectionManager(connectionManager)
                             .setDefaultCookieStore(cookies)
+                            // the method below is needed to remove header error with expiration date
+                            .setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build())
                             .build();
 
                     HttpClientContext context = HttpClientContext.create();
@@ -291,7 +295,13 @@ public class RequestSender {
                     httpResponse.close();
 
                 } else {
-                    CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).setConnectionManager(connectionManager).build();
+                    CloseableHttpClient httpClient = HttpClients
+                            .custom()
+                            .setSSLSocketFactory(sslsf)
+                            .setConnectionManager(connectionManager)
+                            // the method below is needed to remove header error with expiration date
+                            .setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build())
+                            .build();
 
                     CloseableHttpResponse httpResponse = httpClient.execute(request);
 
@@ -319,7 +329,7 @@ public class RequestSender {
 
         HttpPost httpPost;
 
-        if (isValidateUrl(url)) {
+        if (url.startsWith("http:") || url.startsWith("https:")) {
 
             httpPost = new HttpPost(url);
 
@@ -360,7 +370,7 @@ public class RequestSender {
 
         HttpPut httpPut;
 
-        if (isValidateUrl(url)) {
+        if (url.startsWith("http:") || url.startsWith("https:")) {
 
             httpPut = new HttpPut(url);
 
@@ -401,7 +411,7 @@ public class RequestSender {
 
         HttpGet httpGet;
 
-        if (isValidateUrl(url)) {
+        if (url.startsWith("http:") || url.startsWith("https:")) {
 
             httpGet = new HttpGet(url);
 
@@ -425,7 +435,7 @@ public class RequestSender {
 
         HttpDelete httpDelete;
 
-        if (isValidateUrl(url)) {
+        if (url.startsWith("http:") || url.startsWith("https:")) {
 
             httpDelete = new HttpDelete(url);
 
@@ -444,12 +454,6 @@ public class RequestSender {
 
     }
 
-
-    private boolean isValidateUrl(String url){
-        UrlValidator urlValidator = new UrlValidator();
-        return urlValidator.isValid(url);
-    }
-
     private Map<String, String> httpResponseDecomposer(CloseableHttpResponse httpResponse) throws IOException {
 
         final String statusCode = "statusCode";
@@ -465,17 +469,17 @@ public class RequestSender {
 
         if (Integer.valueOf(responseObj.get(statusCode)) >= 200 && Integer.valueOf(responseObj.get(statusCode)) < 300){
 
-            log.info(String.format("Request was successful - status code: %s ", statusCode));
+            log.info(String.format("Request was successful - status code: %s ", responseObj.get(statusCode)));
 
         } else if (Integer.valueOf(responseObj.get(statusCode)) >= 400 && Integer.valueOf(responseObj.get(statusCode)) < 500){
 
-            log.warn(String.format("Request was not successful - client side problem - status code: %s", statusCode));
-            log.warn(String.format("The data insertion may have been compromised, the obtained response body is: %n%s", responseAsString));
+            log.warn(String.format("Request was not successful - client side problem - status code: %s", responseObj.get(statusCode)));
+            log.warn(String.format("The data insertion/fetching was compromised, the obtained response body is: %n%s", responseObj.get(responseAsString)));
 
         } else if (Integer.valueOf(responseObj.get(statusCode)) >= 500){
 
-            log.warn(String.format("Request was not successful - Server side problem - status code: %s", statusCode));
-            log.warn(String.format("The data insertion may have been compromised, the obtained response body is: %n%s", responseAsString));
+            log.warn(String.format("Request was not successful - Server side problem - status code: %s", responseObj.get(statusCode)));
+            log.warn(String.format("The data insertion/fetching was compromised, the obtained response body is: %n%s", responseObj.get(responseAsString)));
 
         }
 

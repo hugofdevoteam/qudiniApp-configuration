@@ -1,5 +1,6 @@
 package com.qudini.api.requests.composition;
 
+import com.jayway.jsonpath.JsonPath;
 import com.qudini.api.RequestSender;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
@@ -17,23 +18,36 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Slf4j
-public class Merchants extends RequestSender{
+import static com.qudini.api.rest.endpoints.MerchantEndpoints.*;
+import static com.qudini.api.rest.json.paths.MerchantPaths.MERCHANT_ID_WITH_NAME;
 
-    private static final String MERCHANT_CSV_HEADER_NAME = "Name";
+@Slf4j
+public class Merchants extends RequestSender {
+
+    private static final String MERCHANT_CSV_HEADER_NAME = "name";
     private static final String MERCHANT_CSV_HEADER_MAX_VENUES = "maxVenues";
     private static final String MERCHANT_CSV_HEADER_TEMPLATE_KEY = "templateKey";
     private static final String MERCHANT_CSV_HEADER_CONTRACT_STATUS_KEY = "contractStatusKey";
     private static final String MERCHANT_CSV_HEADER_INDUSTRY_SECTOR_KEY = "industrySectorKey";
     private static final String MERCHANT_CSV_HEADER_SIZE_CATEGORY_KEY = "sizeCategoryKey";
-    private static final String MERCAHNT_CSV_HEADER_SALES_REGION_KEY = "salesRegionKey";
+    private static final String MERCHANT_CSV_HEADER_SALES_REGION_KEY = "salesRegionKey";
     private static final String MERCHANT_CSV_HEADER_COUNTRY_KEY = "countryKey";
     private static final String MERCHANT_CSV_HEADER_TIMEZONE_KEY = "timezoneKey";
     private static final String MERCHANT_CSV_HEADER_LANGUAGE_KEY = "languageKey";
     private static final String MERCHANT_CSV_HEADER_BILLING_TYPE_KEY = "billingTypeKey";
     private static final String MERCHANT_CSV_HEADER_SALES_ASSIGNEE_KEY = "salesAssigneeKey";
-    private static final String MERCHANT_CSV_HEADER_QUESTIONS_LIMIT_COUNT = "questionsLimitCount";
+    private static final String MERCHANT_CSV_HEADER_REPORT_WALKOUT_THRESHOLD = "reportWalkoutThreshold";
 
+
+    public void createMerchants(
+            String envBaseUri,
+            String qudiniAppUsername,
+            String qudiniAppPassword)
+            throws IOException {
+
+        createMerchants("src/main/resources/data/merchants.csv", envBaseUri, qudiniAppUsername, qudiniAppPassword);
+
+    }
 
     public void createMerchants(
             String merchantsFilePath,
@@ -58,13 +72,13 @@ public class Merchants extends RequestSender{
                         csvRecord.get(MERCHANT_CSV_HEADER_CONTRACT_STATUS_KEY),
                         csvRecord.get(MERCHANT_CSV_HEADER_INDUSTRY_SECTOR_KEY),
                         csvRecord.get(MERCHANT_CSV_HEADER_SIZE_CATEGORY_KEY),
-                        csvRecord.get(MERCAHNT_CSV_HEADER_SALES_REGION_KEY),
+                        csvRecord.get(MERCHANT_CSV_HEADER_SALES_REGION_KEY),
                         csvRecord.get(MERCHANT_CSV_HEADER_COUNTRY_KEY),
                         csvRecord.get(MERCHANT_CSV_HEADER_TIMEZONE_KEY),
                         csvRecord.get(MERCHANT_CSV_HEADER_LANGUAGE_KEY),
                         csvRecord.get(MERCHANT_CSV_HEADER_BILLING_TYPE_KEY),
                         csvRecord.get(MERCHANT_CSV_HEADER_SALES_ASSIGNEE_KEY),
-                        csvRecord.get(MERCHANT_CSV_HEADER_QUESTIONS_LIMIT_COUNT),
+                        csvRecord.get(MERCHANT_CSV_HEADER_REPORT_WALKOUT_THRESHOLD),
                         envBaseUri,
                         qudiniAppUsername,
                         qudiniAppPassword);
@@ -75,33 +89,6 @@ public class Merchants extends RequestSender{
             throw e;
         }
 
-
-    }
-
-    public void createMerchants(
-            String envBaseUri,
-            String qudiniAppUsername,
-            String qudiniAppPassword)
-            throws IOException {
-
-        createMerchants("src/main/resources/data/merchants.csv", envBaseUri, qudiniAppUsername, qudiniAppPassword);
-        
-    }
-
-    public void createMerchant(List<NameValuePair> merchantNameValuePairs,
-                               String envBaseUri,
-                               String qudiniAppUsername,
-                               String qudiniAppPassword) throws UnsupportedEncodingException {
-
-        String url = String.format("%s/api-merchant-add", envBaseUri);
-
-        String response = sendPost(
-                url,
-                generateQudiniAppToken(qudiniAppUsername, qudiniAppPassword),
-                merchantNameValuePairs,
-                "UTF-8");
-
-        log.debug(String.format("Response: %s", response));
 
     }
 
@@ -118,7 +105,7 @@ public class Merchants extends RequestSender{
             String languageKey,
             String billingTypeKey,
             String salesAssigneeKey,
-            String questionsLimitCount,
+            String reportWalkoutThreshold,
             String envBaseUri,
             String qudiniAppUsername,
             String qudiniAppPassword)
@@ -126,29 +113,62 @@ public class Merchants extends RequestSender{
 
         List<NameValuePair> paramsAsNameValuePairList = new ArrayList<>();
 
-        paramsAsNameValuePairList.add(new BasicNameValuePair("name", name));
-        paramsAsNameValuePairList.add(new BasicNameValuePair("maxVenues", maxVenues));
-        paramsAsNameValuePairList.add(new BasicNameValuePair("templateKey", templateKey));
-        paramsAsNameValuePairList.add(new BasicNameValuePair("contractStatusKey", contractStatusKey));
-        paramsAsNameValuePairList.add(new BasicNameValuePair("industrySectorKey", industrySectorKey));
-        paramsAsNameValuePairList.add(new BasicNameValuePair("sizeCategoryKey", sizeCategoryKey));
-        paramsAsNameValuePairList.add(new BasicNameValuePair("salesRegionKey", salesRegionKey));
-        paramsAsNameValuePairList.add(new BasicNameValuePair("countryKey", countryKey));
-        paramsAsNameValuePairList.add(new BasicNameValuePair("timezoneKey", timezoneKey));
-        paramsAsNameValuePairList.add(new BasicNameValuePair("languageKey", languageKey));
-        paramsAsNameValuePairList.add(new BasicNameValuePair("billingTypeKey", billingTypeKey));
-        paramsAsNameValuePairList.add(new BasicNameValuePair("salesAssigneeKey", salesAssigneeKey));
-        paramsAsNameValuePairList.add(new BasicNameValuePair("questionsLimitCount", questionsLimitCount));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_NAME, name));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_MAX_VENUES, maxVenues));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_TEMPLATE_KEY, templateKey));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_CONTRACT_STATUS_KEY, contractStatusKey));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_INDUSTRY_SECTOR_KEY, industrySectorKey));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_SIZE_CATEGORY_KEY, sizeCategoryKey));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_SALES_REGION_KEY, salesRegionKey));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_COUNTRY_KEY, countryKey));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_TIMEZONE_KEY, timezoneKey));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_LANGUAGE_KEY, languageKey));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_BILLING_TYPE_KEY, billingTypeKey));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_SALES_ASSIGNEE_KEY, salesAssigneeKey));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_REPORT_WALKOUT_THRESHOLD, reportWalkoutThreshold));
 
-        log.info(String.format("Trying to create a merchant with the following info: %s",
-                paramsAsNameValuePairList
-                        .stream()
-                        .map(NameValuePair::getValue)
-                        .collect(Collectors.toList())
-                        .toString()));
 
         createMerchant(paramsAsNameValuePairList, envBaseUri, qudiniAppUsername, qudiniAppPassword);
 
     }
 
+    public void createMerchant(List<NameValuePair> merchantNameValuePairs,
+                               String envBaseUri,
+                               String qudiniAppUsername,
+                               String qudiniAppPassword) throws UnsupportedEncodingException {
+
+        String url = String.format("%s%s", envBaseUri, ADD_MERCHANT).trim();
+
+        log.info(String.format("App is making a call to the url [%s] to create a merchant with the info: %s",
+                url,
+                merchantNameValuePairs
+                        .stream()
+                        .map(NameValuePair::getValue)
+                        .collect(Collectors.toList())
+                        .toString()));
+
+        String response = sendPost(
+                url,
+                generateQudiniAppToken(qudiniAppUsername, qudiniAppPassword),
+                merchantNameValuePairs,
+                "UTF-8");
+
+        log.debug(String.format("Obtained response from create merchant: %s", response));
+
+    }
+
+
+    public String getMerchantIdByName(
+            String merchantListResponse,
+            String merchantName){
+
+        List<Integer> ids = JsonPath.read(merchantListResponse, String.format(MERCHANT_ID_WITH_NAME, merchantName));
+
+        return ids.get(0).toString();
+
+    }
+
+
 }
+
+

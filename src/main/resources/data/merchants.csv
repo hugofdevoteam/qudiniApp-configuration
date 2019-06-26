@@ -1,2 +1,2 @@
-name,maxVenues,templateKey,contractStatusKey,industrySectorKey,sizeCategoryKey,salesRegionKey,countryKey,timezoneKey,languageKey,billingTypeKey,salesAssigneeKey,questionsLimitCount
-BoldAPIMerchant,10,UNKNOWN,PAYING,RETAIL,ENTERPRISE,UK,GB,Europe/London,en,OFFLINE,UNKNOWN,99
+name,maxVenues,templateKey,contractStatusKey,industrySectorKey,sizeCategoryKey,salesRegionKey,countryKey,timezoneKey,languageKey,billingTypeKey,salesAssigneeKey,reportWalkoutThreshold
+QudiniBoldMerchant,10,UNKNOWN,PAYING,RETAIL,ENTERPRISE,UK,GB,Europe/London,en,OFFLINE,UNKNOWN,720
