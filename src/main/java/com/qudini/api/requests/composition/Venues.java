@@ -1,5 +1,6 @@
 package com.qudini.api.requests.composition;
 
+import com.jayway.jsonpath.JsonPath;
 import com.qudini.api.RequestSender;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
@@ -11,11 +12,12 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 
 import static com.qudini.api.rest.endpoints.MerchantEndpoints.*;
 import static com.qudini.api.rest.endpoints.VenueEndpoints.*;
-
-
+import static com.qudini.api.rest.json.paths.MerchantPaths.MERCHANT_ID_WITH_NAME;
+import static com.qudini.api.rest.json.paths.VenuePaths.VENUE_ID_WITH_NAME;
 
 
 @Slf4j
@@ -100,6 +102,26 @@ public class Venues extends RequestSender {
             log.error(String.format("Could find an id for the merchant with name [ %s ]", merchantName));
         }
 
+
+    }
+
+    public String getVenueIdByName(
+            String merchantName,
+            String venueName,
+            String envBaseUri,
+            String token){
+
+        String merchantId = getMerchantId(merchantName, envBaseUri, token);
+
+        String url = String.format("%s%s", envBaseUri, String.format(GET_VENUE_FOR_MERCHANT_ID, merchantId));
+
+        String venueResponse = sendGet(url, token);
+
+        log.debug(String.format("Fetching venue Id for the venue name: %s", venueName));
+
+        List<Integer> ids = JsonPath.read(venueResponse, String.format(VENUE_ID_WITH_NAME, venueName));
+
+        return ids.get(0).toString();
 
     }
 

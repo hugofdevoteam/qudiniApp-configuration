@@ -159,10 +159,10 @@ public class Merchants extends RequestSender {
 
 
     public String getMerchantIdByName(
-            String merchantListResponse,
+            String merchantResponse,
             String merchantName){
 
-        List<Integer> ids = JsonPath.read(merchantListResponse, String.format(MERCHANT_ID_WITH_NAME, merchantName));
+        List<Integer> ids = JsonPath.read(merchantResponse, String.format(MERCHANT_ID_WITH_NAME, merchantName));
 
         return ids.get(0).toString();
 

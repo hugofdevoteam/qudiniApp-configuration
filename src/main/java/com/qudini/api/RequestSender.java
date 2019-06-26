@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static java.lang.Integer.parseInt;
+
 @Slf4j
 public class RequestSender {
 
@@ -62,8 +64,7 @@ public class RequestSender {
 
         return new Base64Encoder()
                 .encode(
-                        String.format("%s:%s", userName, password)
-                                .getBytes())
+                        String.format("%s:%s", userName, password).getBytes())
                 .replaceAll("(?:\\r\\n|\\n\\r|\\n|\\r)", "");
 
     }
@@ -156,8 +157,7 @@ public class RequestSender {
             String charSet,
             boolean withCookies) {
 
-        HttpPost httpPost;
-        httpPost = httpPostBaseSpecification(url, contentType, token, paramsAsString, charSet);
+        HttpPost httpPost = httpPostBaseSpecification(url, contentType, token, paramsAsString, charSet);
 
         return executeRequest(httpPost, withCookies);
     }
@@ -467,19 +467,19 @@ public class RequestSender {
         responseObj.put(responseAsString, EntityUtils.toString(httpResponse.getEntity()));
 
 
-        if (Integer.valueOf(responseObj.get(statusCode)) >= 200 && Integer.valueOf(responseObj.get(statusCode)) < 300){
+        if (parseInt(responseObj.get(statusCode)) >= 200 && parseInt(responseObj.get(statusCode)) < 300){
 
             log.info(String.format("Request was successful - status code: %s ", responseObj.get(statusCode)));
 
-        } else if (Integer.valueOf(responseObj.get(statusCode)) >= 400 && Integer.valueOf(responseObj.get(statusCode)) < 500){
+        } else if (parseInt(responseObj.get(statusCode)) >= 400 && parseInt(responseObj.get(statusCode)) < 500){
 
-            log.warn(String.format("Request was not successful - client side problem - status code: %s", responseObj.get(statusCode)));
-            log.warn(String.format("The data insertion/fetching was compromised, the obtained response body is: %n%s", responseObj.get(responseAsString)));
+            log.error(String.format("Request was not successful - client side problem - status code: %s", responseObj.get(statusCode)));
+            log.error(String.format("The data insertion/fetching was compromised, the obtained response body is: %n%s", responseObj.get(responseAsString)));
 
-        } else if (Integer.valueOf(responseObj.get(statusCode)) >= 500){
+        } else if (parseInt(responseObj.get(statusCode)) >= 500){
 
-            log.warn(String.format("Request was not successful - Server side problem - status code: %s", responseObj.get(statusCode)));
-            log.warn(String.format("The data insertion/fetching was compromised, the obtained response body is: %n%s", responseObj.get(responseAsString)));
+            log.error(String.format("Request was not successful - Server side problem - status code: %s", responseObj.get(statusCode)));
+            log.error(String.format("The data insertion/fetching was compromised, the obtained response body is: %n%s", responseObj.get(responseAsString)));
 
         }
 
