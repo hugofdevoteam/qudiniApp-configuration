@@ -2,7 +2,6 @@ package com.qudini.api;
 
 import com.thoughtworks.xstream.core.util.Base64Encoder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.config.CookieSpecs;
@@ -62,10 +61,14 @@ public class RequestSender {
      */
     public String generateQudiniAppToken(String userName, String password) {
 
-        return new Base64Encoder()
+        String token = new Base64Encoder()
                 .encode(
                         String.format("%s:%s", userName, password).getBytes())
                 .replaceAll("(?:\\r\\n|\\n\\r|\\n|\\r)", "");
+
+        log.debug(String.format("generated access token: %s", token));
+
+        return token;
 
     }
 
@@ -180,8 +183,7 @@ public class RequestSender {
             String paramsAsString,
             String charSet) {
 
-        HttpPost httpPost;
-        httpPost = httpPostBaseSpecification(url, contentType, token, paramsAsString, charSet);
+        HttpPost httpPost = httpPostBaseSpecification(url, contentType, token, paramsAsString, charSet);
 
         return executeRequest(httpPost, false);
 
@@ -222,8 +224,7 @@ public class RequestSender {
             String paramsAsString,
             String charSet) {
 
-        HttpPut httpPut;
-        httpPut = httpPutBaseSpecification(url, contentType, token, paramsAsString, charSet);
+        HttpPut httpPut = httpPutBaseSpecification(url, contentType, token, paramsAsString, charSet);
 
         return executeRequest(httpPut, false);
 
