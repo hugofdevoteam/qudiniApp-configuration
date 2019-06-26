@@ -36,41 +36,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.lang.Integer.parseInt;
+import static com.qudini.configuration.GlobalConfiguration.*;
 
 @Slf4j
 public class RequestSender {
 
 
-    // MUST BE REMOVED FROM HERE - THIS MAY BECOME A LIB AND WILL NOT BE DEPENDENT OF THIS
-//    private static String baseUri = configuration.getQudiniAppStaticData().getBaseuri();
-//    private static String adminUsername = configuration.getQudiniAppStaticData().getUser();
-//    private static String adminPassword = configuration.getQudiniAppStaticData().getPassword();
-//    private static String defaultCharSet = configuration.getRequestStaticValues().getDefaultCharSet();
-//    private static String encoding = getEncoding(adminUsername, adminPassword);
+    private static final String BASE_URI = configuration.getQudiniAppStaticData().getBaseuri();
+    private static final  String TOKEN = generateQudiniAppToken(configuration.getQudiniAppStaticData().getUser(), configuration.getQudiniAppStaticData().getPassword());
+
     private static CookieStore cookies;
 
-
-    // PUBLIC METHODS
-
-    /**
-     * Generates the access token for qudiniApp
-     *
-     * @param userName the username
-     * @param password the password in plain text
-     * @return token string
-     */
-    public String generateQudiniAppToken(String userName, String password) {
-
-        String token = new Base64Encoder()
-                .encode(
-                        String.format("%s:%s", userName, password).getBytes())
-                .replaceAll("(?:\\r\\n|\\n\\r|\\n|\\r)", "");
-
-        log.debug(String.format("generated access token: %s", token));
-
-        return token;
-
-    }
 
     // PROTECTED METHODS
 
@@ -79,21 +55,19 @@ public class RequestSender {
     /**
      * Executes a post request with form parameters provided as a list of NameValuePair
      *
-     * @param url The full url that should be called
-     * @param token The generated authorization token
+     * @param endpointUri the resource Uri being called
      * @param paramsAsNameValuePair list of form key-value object
      * @param charSet the charset
      * @return the response as string of the executed request
      * @throws UnsupportedEncodingException
      */
     protected String sendPost(
-            String url,
-            String token,
+            String endpointUri,
             List<NameValuePair> paramsAsNameValuePair,
             String charSet)
             throws UnsupportedEncodingException{
 
-        HttpPost httppost = httpPostBaseSpecification(url,"application/x-www-form-urlencoded", token);
+        HttpPost httppost = httpPostBaseSpecification(String.format("%s%s", BASE_URI, endpointUri),"application/x-www-form-urlencoded", TOKEN);
 
         try {
             httppost.setEntity(new UrlEncodedFormEntity(paramsAsNameValuePair, charSet));
@@ -485,6 +459,19 @@ public class RequestSender {
         }
 
         return responseObj;
+    }
+
+    private static String generateQudiniAppToken(String userName, String password) {
+
+        String token = new Base64Encoder()
+                .encode(
+                        String.format("%s:%s", userName, password).getBytes())
+                .replaceAll("(?:\\r\\n|\\n\\r|\\n|\\r)", "");
+
+        log.debug(String.format("generated access token: %s", token));
+
+        return token;
+
     }
 
 
