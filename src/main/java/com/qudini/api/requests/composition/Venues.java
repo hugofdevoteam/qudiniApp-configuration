@@ -15,24 +15,22 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static com.qudini.api.requests.composition.Merchants.getMerchantIdByName;
-import static com.qudini.api.rest.endpoints.MerchantEndpoints.*;
-import static com.qudini.api.rest.endpoints.VenueEndpoints.*;
-import static com.qudini.api.rest.json.paths.MerchantPaths.MERCHANT_ID_WITH_NAME;
+import static com.qudini.api.rest.endpoints.MerchantEndpoints.GET_ALL_MERCHANTS_FOR_CONTACT;
+import static com.qudini.api.rest.endpoints.VenueEndpoints.ADD_MERCHANT_VENUE;
+import static com.qudini.api.rest.endpoints.VenueEndpoints.GET_VENUE_FOR_MERCHANT_ID;
 import static com.qudini.api.rest.json.paths.VenuePaths.VENUE_ID_WITH_NAME;
 
 
 @Slf4j
-public class Venues extends RequestSender {
+public class Venues {
+
+    private RequestSender requestSender;
 
     private static final String VENUE_CSV_HEADER_MERCHANT_NAME = "merchantName";
     private static final String VENUE_CSV_HEADER_VENUE_NAME = "venueName";
 
-    public Venues(
-            String baseuri,
-            String username,
-            String password){
-
-        super(baseuri, username, password);
+    public Venues(RequestSender requestSender){
+        this.requestSender = requestSender;
     }
 
     public void createVenues()
@@ -88,7 +86,7 @@ public class Venues extends RequestSender {
                             merchantName,
                             resourceUri));
 
-            String response = sendPost(resourceUri,"application/json");
+            String response = requestSender.sendPost(resourceUri,"application/json");
 
             log.debug(String.format("Response for create venue: %s", response));
 
@@ -106,7 +104,7 @@ public class Venues extends RequestSender {
 
         String merchantId = getMerchantId(merchantName);
 
-        String venueResponse = sendGet(String.format(GET_VENUE_FOR_MERCHANT_ID, merchantId));
+        String venueResponse = requestSender.sendGet(String.format(GET_VENUE_FOR_MERCHANT_ID, merchantId));
 
         log.debug(String.format("Fetching venue Id for the venue name: %s", venueName));
 
@@ -125,7 +123,7 @@ public class Venues extends RequestSender {
 
         log.info(String.format("Request information for all the contact merchants using the endpoint URI: %s", GET_ALL_MERCHANTS_FOR_CONTACT));
 
-        String getMerchantsResponse = sendGet(GET_ALL_MERCHANTS_FOR_CONTACT);
+        String getMerchantsResponse = requestSender.sendGet(GET_ALL_MERCHANTS_FOR_CONTACT);
 
         log.debug(String.format("Fetching merchant Id for the merchant name: %s", merchantName));
 

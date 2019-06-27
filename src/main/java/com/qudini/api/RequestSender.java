@@ -3,6 +3,7 @@ package com.qudini.api;
 import com.thoughtworks.xstream.core.util.Base64Encoder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
@@ -48,7 +49,7 @@ public class RequestSender {
     private static CookieStore cookies;
 
 
-    protected RequestSender(
+    public RequestSender(
             String baseUri,
             String userName,
             String password){
@@ -72,7 +73,7 @@ public class RequestSender {
      * @return the response as string of the executed request
      * @throws UnsupportedEncodingException
      */
-    protected String sendPost(
+    public String sendPost(
             String endpointUri,
             List<NameValuePair> paramsAsNameValuePair,
             String charSet)
@@ -105,7 +106,7 @@ public class RequestSender {
      * @return the response as string of the executed request
      * @throws UnsupportedEncodingException
      */
-    protected String sendPost(
+    public String sendPost(
             String endpointUri,
             String contentType)
             throws UnsupportedEncodingException {
@@ -134,7 +135,7 @@ public class RequestSender {
      * @param withCookies cookies switch
      * @return the response as string of the executed request
      */
-    protected String sendPost(
+    public String sendPost(
             String endpointUri,
             String contentType,
             String paramsAsString,
@@ -156,7 +157,7 @@ public class RequestSender {
      * @param charSet the charset
      * @return the response as string of the executed request
      */
-    protected String sendPost(
+    public String sendPost(
             String endpointUri,
             String contentType,
             String paramsAsString,
@@ -170,7 +171,7 @@ public class RequestSender {
 
     // -- PUT REQUEST -- //
 
-    protected String sendPut(
+    public String sendPut(
             String endpointUri,
             List<NameValuePair> paramsAsNameValuePair,
             String charSet)
@@ -195,7 +196,7 @@ public class RequestSender {
 
     }
 
-    protected String sendPut(
+    public String sendPut(
             String endpointUri,
             String contentType,
             String paramsAsString,
@@ -210,7 +211,7 @@ public class RequestSender {
 
     // -- GET REQUESTS -- //
 
-    protected String sendGet(
+    public String sendGet(
             String endpointUri) {
 
         HttpRequestBase httpGet = httpBaseSpecification("get", endpointUri, token);
@@ -220,7 +221,7 @@ public class RequestSender {
 
     // -- DELETE REQUESTS -- //
 
-    protected String sendDelete(String endpointUri) {
+    public String sendDelete(String endpointUri) {
 
         HttpRequestBase httpDelete = httpBaseSpecification("delete", endpointUri, token);
 
@@ -297,7 +298,7 @@ public class RequestSender {
 
         }catch (NoSuchAlgorithmException | IOException | KeyManagementException | KeyStoreException e){
 
-            log.error("An exception has occurred while making the intended requests, see stack trace for more details");
+            log.error("An exception has occurred while making the intended requests");
 
             log.error(e.toString());
 
@@ -419,20 +420,19 @@ public class RequestSender {
 
         responseObj.put(responseAsString, EntityUtils.toString(httpResponse.getEntity()));
 
+        final String statusCodeErrorMsg = String.format("Request was not successful - status code: %s", responseObj.get(statusCode));
 
-        if (parseInt(responseObj.get(statusCode)) >= 200 && parseInt(responseObj.get(statusCode)) < 300){
+        final String responseBodyErrorMsg = String.format("The data insertion/fetching was compromised, the obtained response body is: %n%s", responseObj.get(responseAsString));
+
+
+        if (parseInt(responseObj.get(statusCode)) >= 200 && parseInt(responseObj.get(statusCode)) < 300) {
 
             log.info(String.format("Request was successful - status code: %s ", responseObj.get(statusCode)));
 
-        } else if (parseInt(responseObj.get(statusCode)) >= 400 && parseInt(responseObj.get(statusCode)) < 500){
+        } else if (parseInt(responseObj.get(statusCode)) >= 400){
 
-            log.error(String.format("Request was not successful - client side problem - status code: %s", responseObj.get(statusCode)));
-            log.error(String.format("The data insertion/fetching was compromised, the obtained response body is: %n%s", responseObj.get(responseAsString)));
-
-        } else if (parseInt(responseObj.get(statusCode)) >= 500){
-
-            log.error(String.format("Request was not successful - Server side problem - status code: %s", responseObj.get(statusCode)));
-            log.error(String.format("The data insertion/fetching was compromised, the obtained response body is: %n%s", responseObj.get(responseAsString)));
+            log.error(statusCodeErrorMsg);
+            log.error(responseBodyErrorMsg);
 
         }
 

@@ -17,12 +17,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 import static com.qudini.api.rest.endpoints.QueueEndpoints.ADD_VENUE_QUEUE;
 
 
 @Slf4j
-public class Queues extends RequestSender {
+public class Queues {
+
+    private RequestSender requestSender;
 
     private Venues venues;
 
@@ -33,13 +34,9 @@ public class Queues extends RequestSender {
 
     private static final String VENUE_ID = "venueId";
 
-    public Queues(
-            String baseUri,
-            String username,
-            String password){
-
-        super(baseUri, username, password);
-        venues = new Venues(baseUri, username, password);
+    public Queues(RequestSender requestSender){
+        this.requestSender = requestSender;
+        this.venues = new Venues(requestSender);
     }
 
 
@@ -111,12 +108,12 @@ public class Queues extends RequestSender {
                         .collect(Collectors.toList())
                         .toString()));
 
-        String response = sendPost(
+        String response = requestSender.sendPost(
                 ADD_VENUE_QUEUE,
                 queueNameValuePairs,
                 "UTF-8");
 
-        log.debug(String.format("Obtained response from create merchant: %s", response));
+        log.debug(String.format("Obtained response from create queue: %s", response));
 
     }
 

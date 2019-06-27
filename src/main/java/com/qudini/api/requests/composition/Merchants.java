@@ -18,11 +18,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.qudini.api.rest.endpoints.MerchantEndpoints.*;
+import static com.qudini.api.rest.endpoints.MerchantEndpoints.ADD_MERCHANT;
 import static com.qudini.api.rest.json.paths.MerchantPaths.MERCHANT_ID_WITH_NAME;
 
 @Slf4j
-public class Merchants extends RequestSender {
+public class Merchants {
+
+    private RequestSender requestSender;
 
     private static final String MERCHANT_CSV_HEADER_NAME = "name";
     private static final String MERCHANT_CSV_HEADER_MAX_VENUES = "maxVenues";
@@ -38,13 +40,8 @@ public class Merchants extends RequestSender {
     private static final String MERCHANT_CSV_HEADER_SALES_ASSIGNEE_KEY = "salesAssigneeKey";
     private static final String MERCHANT_CSV_HEADER_REPORT_WALKOUT_THRESHOLD = "reportWalkoutThreshold";
 
-
-    public Merchants(
-            String baseUri,
-            String username,
-            String passoword){
-
-        super(baseUri, username, passoword);
+    public Merchants(RequestSender requestSender){
+        this.requestSender = requestSender;
     }
 
 
@@ -139,7 +136,7 @@ public class Merchants extends RequestSender {
                         .collect(Collectors.toList())
                         .toString()));
 
-        String response = sendPost(
+        String response = requestSender.sendPost(
                 ADD_MERCHANT,
                 merchantNameValuePairs,
                 "UTF-8");

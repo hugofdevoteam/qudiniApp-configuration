@@ -1,5 +1,6 @@
 package com.qudini;
 
+import com.qudini.api.RequestSender;
 import com.qudini.api.requests.composition.Merchants;
 import com.qudini.api.requests.composition.Queues;
 import com.qudini.api.requests.composition.Venues;
@@ -23,20 +24,23 @@ public class QudiniAppDataGenerator {
         String admin_username = configuration.getQudiniAppStaticData().getUser();
         String admin_password = configuration.getQudiniAppStaticData().getPassword();
 
-        Merchants merchants = new Merchants(appBaseUrl, admin_username, admin_password);
+        RequestSender requestSender = new RequestSender(appBaseUrl, admin_username, admin_password);
+
+        Merchants merchants = new Merchants(requestSender);
 
         log.info(String.format("QudiniApp data generator started for environment: %s" , getEnv().toUpperCase()));
         log.info("QudiniApp Base URL: " + appBaseUrl + " QudiniApp User: " + admin_username); //" QudiniApp Password: " + admin_password
 
         try {
             merchants.createMerchants();
+            new Venues(requestSender).createVenues();
+
+            new Queues(requestSender).createQueues();
         }catch (IOException e) {
             e.printStackTrace();
         }
 
-        new Venues(appBaseUrl, admin_username, admin_password).createVenues();
 
-        new Queues(appBaseUrl, admin_username, admin_password).createQueues();
 
     }
 }

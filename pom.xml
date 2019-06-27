@@ -12,6 +12,7 @@
         <httpclient.version>4.5.9</httpclient.version>
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
         <apache-common-csv.version>1.7</apache-common-csv.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
 
         <maven.failsafe.plugin.version>2.18</maven.failsafe.plugin.version>
         <maven.compiler.plugin.version>3.2</maven.compiler.plugin.version>
@@ -74,6 +75,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
