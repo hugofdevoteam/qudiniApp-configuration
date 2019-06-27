@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static com.qudini.api.requests.composition.Merchants.getMerchantIdByName;
 import static com.qudini.api.rest.endpoints.MerchantEndpoints.*;
 import static com.qudini.api.rest.endpoints.VenueEndpoints.*;
 import static com.qudini.api.rest.json.paths.MerchantPaths.MERCHANT_ID_WITH_NAME;
@@ -26,23 +27,23 @@ public class Venues extends RequestSender {
     private static final String VENUE_CSV_HEADER_MERCHANT_NAME = "merchantName";
     private static final String VENUE_CSV_HEADER_VENUE_NAME = "venueName";
 
-    public void createVenues(
-            String envBaseUri,
-            String qudiniAppUsername,
-            String qudiniAppPassword)
+    public Venues(
+            String baseuri,
+            String username,
+            String password){
+
+        super(baseuri, username, password);
+    }
+
+    public void createVenues()
             throws IOException {
 
-        createVenues("src/main/resources/data/venues.csv", envBaseUri, qudiniAppUsername, qudiniAppPassword);
-
-
+        createVenues("src/main/resources/data/venues.csv");
 
     }
 
     public void createVenues(
-            String venuesFilePath,
-            String envBaseUri,
-            String qudiniAppUsername,
-            String qudiniAppPassword)
+            String venuesFilePath)
             throws IOException {
 
         try (
@@ -56,10 +57,7 @@ public class Venues extends RequestSender {
 
                 createVenue(
                         csvRecord.get(VENUE_CSV_HEADER_MERCHANT_NAME),
-                        csvRecord.get(VENUE_CSV_HEADER_VENUE_NAME),
-                        envBaseUri,
-                        qudiniAppUsername,
-                        qudiniAppPassword);
+                        csvRecord.get(VENUE_CSV_HEADER_VENUE_NAME));
 
             }
         } catch (IOException e) {
@@ -71,29 +69,26 @@ public class Venues extends RequestSender {
 
     public void createVenue(
             String merchantName,
-            String venueName,
-            String envBaseUri,
-            String qudiniAppUsername,
-            String qudiniAppPassword)
+            String venueName)
             throws UnsupportedEncodingException {
 
 
-        String token = generateQudiniAppToken(qudiniAppUsername, qudiniAppPassword);
-
-        String merchantId = getMerchantId(merchantName, envBaseUri, token);
+        String merchantId = getMerchantId(merchantName);
 
         if (!merchantId.equals("")){
 
             log.info(String.format("Found the id [ %s ] for the merchant with name [ %s ]", merchantId, merchantName));
 
-            String url = String
-                    .format("%s%s",
-                    envBaseUri,
-                    String.format(ADD_MERCHANT_VENUE, merchantId, venueName));
+            String resourceUri = String.format(ADD_MERCHANT_VENUE, merchantId, venueName);
 
-            log.info(String.format("Creating venue with name [ %s ] for merchant [%s - %s] using the url [ %s ]", venueName, merchantId, merchantName, url));
+            log.info(String
+                    .format("Creating venue with name [ %s ] for merchant [%s - %s] using the resource URI [ %s ]",
+                            venueName,
+                            merchantId,
+                            merchantName,
+                            resourceUri));
 
-            String response = sendPost(url,"application/json", token);
+            String response = sendPost(resourceUri,"application/json");
 
             log.debug(String.format("Response for create venue: %s", response));
 
@@ -107,19 +102,17 @@ public class Venues extends RequestSender {
 
     public String getVenueIdByName(
             String merchantName,
-            String venueName,
-            String envBaseUri,
-            String token){
+            String venueName){
 
-        String merchantId = getMerchantId(merchantName, envBaseUri, token);
+        String merchantId = getMerchantId(merchantName);
 
-        String url = String.format("%s%s", envBaseUri, String.format(GET_VENUE_FOR_MERCHANT_ID, merchantId));
-
-        String venueResponse = sendGet(url, token);
+        String venueResponse = sendGet(String.format(GET_VENUE_FOR_MERCHANT_ID, merchantId));
 
         log.debug(String.format("Fetching venue Id for the venue name: %s", venueName));
 
         List<Integer> ids = JsonPath.read(venueResponse, String.format(VENUE_ID_WITH_NAME, venueName));
+
+        log.info(String.format("Found the id %s for the venue with the name [ %s ]", ids.get(0).toString(), venueName));
 
         return ids.get(0).toString();
 
@@ -128,20 +121,15 @@ public class Venues extends RequestSender {
 
     // PRIVATE METHODS
 
-    private String getMerchantId(String merchantName, String envBaseUri,  String token){
+    private String getMerchantId(String merchantName){
 
-        Merchants merchants = new Merchants();
+        log.info(String.format("Request information for all the contact merchants using the endpoint URI: %s", GET_ALL_MERCHANTS_FOR_CONTACT));
 
-        //get merchant id using the merchant name
-        String getMerchantsUrl = String.format("%s%s", envBaseUri, GET_ALL_MERCHANTS_FOR_CONTACT);
-
-        log.info(String.format("Request information for all the contact merchants using the URL: %s", getMerchantsUrl));
-
-        String getMerchantsResponse = sendGet(getMerchantsUrl, token);
+        String getMerchantsResponse = sendGet(GET_ALL_MERCHANTS_FOR_CONTACT);
 
         log.debug(String.format("Fetching merchant Id for the merchant name: %s", merchantName));
 
-        return merchants.getMerchantIdByName(getMerchantsResponse, merchantName);
+        return getMerchantIdByName(getMerchantsResponse, merchantName);
 
     }
 }

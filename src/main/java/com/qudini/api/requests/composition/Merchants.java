@@ -39,22 +39,24 @@ public class Merchants extends RequestSender {
     private static final String MERCHANT_CSV_HEADER_REPORT_WALKOUT_THRESHOLD = "reportWalkoutThreshold";
 
 
-    public void createMerchants(
-            String envBaseUri,
-            String qudiniAppUsername,
-            String qudiniAppPassword)
+    public Merchants(
+            String baseUri,
+            String username,
+            String passoword){
+
+        super(baseUri, username, passoword);
+    }
+
+
+    public void createMerchants()
             throws IOException {
 
-        createMerchants("src/main/resources/data/merchants.csv", envBaseUri, qudiniAppUsername, qudiniAppPassword);
+        createMerchants("src/main/resources/data/merchants.csv");
 
     }
 
     public void createMerchants(
-            String merchantsFilePath,
-            String envBaseUri,
-            String qudiniAppUsername,
-            String qudiniAppPassword)
-            throws IOException {
+            String merchantsFilePath) throws IOException {
 
         try (
                 Reader reader = Files.newBufferedReader(Paths.get(merchantsFilePath));
@@ -78,14 +80,12 @@ public class Merchants extends RequestSender {
                         csvRecord.get(MERCHANT_CSV_HEADER_LANGUAGE_KEY),
                         csvRecord.get(MERCHANT_CSV_HEADER_BILLING_TYPE_KEY),
                         csvRecord.get(MERCHANT_CSV_HEADER_SALES_ASSIGNEE_KEY),
-                        csvRecord.get(MERCHANT_CSV_HEADER_REPORT_WALKOUT_THRESHOLD),
-                        envBaseUri,
-                        qudiniAppUsername,
-                        qudiniAppPassword);
+                        csvRecord.get(MERCHANT_CSV_HEADER_REPORT_WALKOUT_THRESHOLD)
+                );
 
             }
         } catch (IOException e) {
-            log.error(String.format("There was a problem with the stated csv file or filepath: %s", merchantsFilePath));
+            log.error(String.format("There was a problem accessing or reading the csv file or filepath: %s", merchantsFilePath));
             throw e;
         }
 
@@ -105,10 +105,7 @@ public class Merchants extends RequestSender {
             String languageKey,
             String billingTypeKey,
             String salesAssigneeKey,
-            String reportWalkoutThreshold,
-            String envBaseUri,
-            String qudiniAppUsername,
-            String qudiniAppPassword)
+            String reportWalkoutThreshold)
             throws UnsupportedEncodingException {
 
         List<NameValuePair> paramsAsNameValuePairList = new ArrayList<>();
@@ -128,19 +125,14 @@ public class Merchants extends RequestSender {
         paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_CSV_HEADER_REPORT_WALKOUT_THRESHOLD, reportWalkoutThreshold));
 
 
-        createMerchant(paramsAsNameValuePairList, envBaseUri, qudiniAppUsername, qudiniAppPassword);
+        createMerchant(paramsAsNameValuePairList);
 
     }
 
-    public void createMerchant(List<NameValuePair> merchantNameValuePairs,
-                               String envBaseUri,
-                               String qudiniAppUsername,
-                               String qudiniAppPassword) throws UnsupportedEncodingException {
+    public void createMerchant(List<NameValuePair> merchantNameValuePairs) throws UnsupportedEncodingException {
 
-        String url = String.format("%s%s", envBaseUri, ADD_MERCHANT).trim();
-
-        log.info(String.format("App is making a call to the url [%s] to create a merchant with the info: %s",
-                url,
+        log.info(String.format("App is making a call to the resourceUri [%s] to create a merchant with the info: %s",
+                ADD_MERCHANT,
                 merchantNameValuePairs
                         .stream()
                         .map(NameValuePair::getValue)
@@ -148,8 +140,7 @@ public class Merchants extends RequestSender {
                         .toString()));
 
         String response = sendPost(
-                url,
-                generateQudiniAppToken(qudiniAppUsername, qudiniAppPassword),
+                ADD_MERCHANT,
                 merchantNameValuePairs,
                 "UTF-8");
 
@@ -158,7 +149,7 @@ public class Merchants extends RequestSender {
     }
 
 
-    public String getMerchantIdByName(
+    public static String getMerchantIdByName(
             String merchantResponse,
             String merchantName){
 

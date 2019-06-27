@@ -16,27 +16,27 @@ public class QudiniAppDataGenerator {
 
     public static void main(String args[]) throws IOException {
 
-        Merchants merchants = new Merchants();
-        Venues venues = new Venues();
-        Queues queues = new Queues();
+
+        //Queues queues = new Queues();
 
         String appBaseUrl = configuration.getQudiniAppStaticData().getBaseuri();
         String admin_username = configuration.getQudiniAppStaticData().getUser();
         String admin_password = configuration.getQudiniAppStaticData().getPassword();
 
+        Merchants merchants = new Merchants(appBaseUrl, admin_username, admin_password);
+
         log.info(String.format("QudiniApp data generator started for environment: %s" , getEnv().toUpperCase()));
         log.info("QudiniApp Base URL: " + appBaseUrl + " QudiniApp User: " + admin_username); //" QudiniApp Password: " + admin_password
 
         try {
-            merchants.createMerchants(appBaseUrl, admin_username, admin_password);
+            merchants.createMerchants();
         }catch (IOException e) {
             e.printStackTrace();
         }
 
-        venues.createVenues(appBaseUrl, admin_username, admin_password);
-        queues.createQueues(appBaseUrl, admin_username, admin_password);
+        new Venues(appBaseUrl, admin_username, admin_password).createVenues();
 
-
+        new Queues(appBaseUrl, admin_username, admin_password).createQueues();
 
     }
 }

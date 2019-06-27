@@ -24,6 +24,8 @@ import static com.qudini.api.rest.endpoints.QueueEndpoints.ADD_VENUE_QUEUE;
 @Slf4j
 public class Queues extends RequestSender {
 
+    private Venues venues;
+
     private static final String QUEUES_CSV_HEADER_MERCHANT_NAME = "merchantName";
     private static final String QUEUES_CSV_HEADER_VENUE_NAME = "venueName";
     private static final String QUEUES_CSV_HEADER_QUEUE_NAME = "name"; //queueName
@@ -31,24 +33,25 @@ public class Queues extends RequestSender {
 
     private static final String VENUE_ID = "venueId";
 
-    private String token = "";
+    public Queues(
+            String baseUri,
+            String username,
+            String password){
+
+        super(baseUri, username, password);
+        venues = new Venues(baseUri, username, password);
+    }
 
 
-    public void createQueues(
-            String envBaseUri,
-            String qudiniAppUsername,
-            String qudiniAppPassword)
+    public void createQueues()
             throws IOException {
 
-        createQueues("src/main/resources/data/queues.csv", envBaseUri, qudiniAppUsername, qudiniAppPassword);
+        createQueues("src/main/resources/data/queues.csv");
 
     }
 
     public void createQueues(
-            String queuesFilePath,
-            String envBaseUri,
-            String qudiniAppUsername,
-            String qudiniAppPassword)
+            String queuesFilePath)
             throws IOException {
 
         try (
@@ -64,10 +67,7 @@ public class Queues extends RequestSender {
                         csvRecord.get(QUEUES_CSV_HEADER_MERCHANT_NAME),
                         csvRecord.get(QUEUES_CSV_HEADER_VENUE_NAME),
                         csvRecord.get(QUEUES_CSV_HEADER_QUEUE_NAME),
-                        csvRecord.get(QUEUES_CSV_HEADER_AVG_SERVE_TIME),
-                        envBaseUri,
-                        qudiniAppUsername,
-                        qudiniAppPassword);
+                        csvRecord.get(QUEUES_CSV_HEADER_AVG_SERVE_TIME));
 
             }
         } catch (IOException e) {
@@ -82,15 +82,10 @@ public class Queues extends RequestSender {
             String merchantName,
             String venueName,
             String queueName,
-            String averageServeTime,
-            String envBaseUri,
-            String qudiniAppUsername,
-            String qudiniAppPassword)
+            String averageServeTime)
             throws UnsupportedEncodingException {
 
-        token = generateQudiniAppToken(qudiniAppUsername, qudiniAppPassword);
-
-        String venueId = getVenueId(merchantName, venueName, envBaseUri, token);
+        String venueId = venues.getVenueIdByName(merchantName, venueName);
 
         List<NameValuePair> paramsAsNameValuePairList = new ArrayList<>();
 
@@ -99,21 +94,17 @@ public class Queues extends RequestSender {
         paramsAsNameValuePairList.add(new BasicNameValuePair(QUEUES_CSV_HEADER_AVG_SERVE_TIME, averageServeTime));
 
 
-        createQueue(paramsAsNameValuePairList, envBaseUri, qudiniAppUsername, qudiniAppPassword);
+        createQueue(paramsAsNameValuePairList);
 
     }
 
     public void createQueue(
-            List<NameValuePair> queueNameValuePairs,
-            String envBaseUri,
-            String qudiniAppUsername,
-            String qudiniAppPassword)
+            List<NameValuePair> queueNameValuePairs)
             throws UnsupportedEncodingException {
 
-        String url = String.format("%s%s", envBaseUri, ADD_VENUE_QUEUE).trim();
 
-        log.info(String.format("App is making a call to the url [%s] to create a queue with the info: %s",
-                url,
+        log.info(String.format("App is making a call to the uri endpoint [%s] to create a queue with the info: %s",
+                ADD_VENUE_QUEUE,
                 queueNameValuePairs
                         .stream()
                         .map(NameValuePair::getValue)
@@ -121,8 +112,7 @@ public class Queues extends RequestSender {
                         .toString()));
 
         String response = sendPost(
-                url,
-                !token.equals("") ? token : generateQudiniAppToken(qudiniAppUsername, qudiniAppPassword),
+                ADD_VENUE_QUEUE,
                 queueNameValuePairs,
                 "UTF-8");
 
@@ -130,15 +120,6 @@ public class Queues extends RequestSender {
 
     }
 
-    //PRIVATE METHODS
-
-    private String getVenueId(String merchantName, String venueName, String envBaseUri, String token){
-
-        Venues venues = new Venues();
-
-        return venues.getVenueIdByName(merchantName, venueName, envBaseUri, token);
-
-    }
 
 
 }

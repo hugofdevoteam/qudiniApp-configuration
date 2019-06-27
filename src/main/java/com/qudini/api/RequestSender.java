@@ -36,16 +36,27 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.lang.Integer.parseInt;
-import static com.qudini.configuration.GlobalConfiguration.*;
 
 @Slf4j
 public class RequestSender {
 
+    private static final String HTTP_SPEC_ERROR = "The provided URL [ %s ] does seem to be a valid URL";
 
-    private static final String BASE_URI = configuration.getQudiniAppStaticData().getBaseuri();
-    private static final  String TOKEN = generateQudiniAppToken(configuration.getQudiniAppStaticData().getUser(), configuration.getQudiniAppStaticData().getPassword());
+    private String baseUri;
+    private String token;
 
     private static CookieStore cookies;
+
+
+    protected RequestSender(
+            String baseUri,
+            String userName,
+            String password){
+
+        this.baseUri = baseUri;
+        this.token = generateQudiniAppToken(userName, password);
+
+    }
 
 
     // PROTECTED METHODS
@@ -67,7 +78,7 @@ public class RequestSender {
             String charSet)
             throws UnsupportedEncodingException{
 
-        HttpPost httppost = httpPostBaseSpecification(String.format("%s%s", BASE_URI, endpointUri),"application/x-www-form-urlencoded", TOKEN);
+        HttpPost httppost = httpPostBaseSpecification(endpointUri,"application/x-www-form-urlencoded", token);
 
         try {
             httppost.setEntity(new UrlEncodedFormEntity(paramsAsNameValuePair, charSet));
@@ -89,19 +100,17 @@ public class RequestSender {
     /**
      * Sends a post request with an empty payload object
      *
-     * @param url The full path url
+     * @param endpointUri the resource Uri being called
      * @param contentType the content type of the send payload
-     * @param token the access token
      * @return the response as string of the executed request
      * @throws UnsupportedEncodingException
      */
     protected String sendPost(
-            String url,
-            String contentType,
-            String token)
+            String endpointUri,
+            String contentType)
             throws UnsupportedEncodingException {
 
-        HttpPost httppost = httpPostBaseSpecification(url, contentType, token);
+        HttpPost httppost = httpPostBaseSpecification(endpointUri, contentType, token);
 
         try {
             httppost.setEntity(new StringEntity("{}"));
@@ -118,46 +127,42 @@ public class RequestSender {
     /**
      * Executes a post request allowing to activate cookies
      *
-     * @param url The full url called
+     * @param endpointUri the resource Uri being called
      * @param contentType The content type header value
-     * @param token The generated authorization token
      * @param paramsAsString the payload parameters as string
      * @param charSet the charset
      * @param withCookies cookies switch
      * @return the response as string of the executed request
      */
     protected String sendPost(
-            String url,
+            String endpointUri,
             String contentType,
-            String token,
             String paramsAsString,
             String charSet,
             boolean withCookies) {
 
-        HttpPost httpPost = httpPostBaseSpecification(url, contentType, token, paramsAsString, charSet);
+        HttpPost httpPost = httpPostBaseSpecification(endpointUri, contentType, token, paramsAsString, charSet);
 
         return executeRequest(httpPost, withCookies);
     }
 
     /**
-     * Overload of method {@link #sendPost(String, String, String, String, String, boolean) sendPost}
+     * Overload of method {@link #sendPost(String, String, String, String, boolean) sendPost}
      * setting the with cookies switch to off (false)
      *
-     * @param url The full url called
+     * @param endpointUri the resource Uri being called
      * @param contentType The content type header value
-     * @param token The generated authorization token
      * @param paramsAsString the payload parameters as string
      * @param charSet the charset
      * @return the response as string of the executed request
      */
     protected String sendPost(
-            String url,
+            String endpointUri,
             String contentType,
-            String token,
             String paramsAsString,
             String charSet) {
 
-        HttpPost httpPost = httpPostBaseSpecification(url, contentType, token, paramsAsString, charSet);
+        HttpPost httpPost = httpPostBaseSpecification(endpointUri, contentType, token, paramsAsString, charSet);
 
         return executeRequest(httpPost, false);
 
@@ -166,13 +171,12 @@ public class RequestSender {
     // -- PUT REQUEST -- //
 
     protected String sendPut(
-            String url,
-            String token,
+            String endpointUri,
             List<NameValuePair> paramsAsNameValuePair,
             String charSet)
             throws UnsupportedEncodingException{
 
-        HttpPut httpPut = httpPutBaseSpecification(url,"application/x-www-form-urlencoded", token);
+        HttpPut httpPut = httpPutBaseSpecification(endpointUri,"application/x-www-form-urlencoded", token);
 
         try {
             httpPut.setEntity(new UrlEncodedFormEntity(paramsAsNameValuePair, charSet));
@@ -192,13 +196,12 @@ public class RequestSender {
     }
 
     protected String sendPut(
-            String url,
+            String endpointUri,
             String contentType,
-            String token,
             String paramsAsString,
             String charSet) {
 
-        HttpPut httpPut = httpPutBaseSpecification(url, contentType, token, paramsAsString, charSet);
+        HttpPut httpPut = httpPutBaseSpecification(endpointUri, contentType, token, paramsAsString, charSet);
 
         return executeRequest(httpPut, false);
 
@@ -207,18 +210,19 @@ public class RequestSender {
 
     // -- GET REQUESTS -- //
 
-    protected String sendGet(String url, String token) {
+    protected String sendGet(
+            String endpointUri) {
 
-        HttpGet httpGet = httpGetBaseSpecification(url, token);
+        HttpGet httpGet = httpGetBaseSpecification(endpointUri, token);
 
         return executeRequest(httpGet, false);
     }
 
     // -- DELETE REQUESTS -- //
 
-    protected String sendDelete(String url, String token) {
+    protected String sendDelete(String endpointUri) {
 
-        HttpDelete httpDelete = httpDeleteBaseSpecification(url, token);
+        HttpDelete httpDelete = httpDeleteBaseSpecification(endpointUri, token);
 
         return executeRequest(httpDelete, false);
 
@@ -265,6 +269,8 @@ public class RequestSender {
 
                     cookies = context.getCookieStore();
 
+                    log.info(String.format("Performing a request for the URL: %s", request.getURI()));
+
                     decomposedResponse = httpResponseDecomposer(httpResponse);
 
                     httpResponse.close();
@@ -279,6 +285,8 @@ public class RequestSender {
                             .build();
 
                     CloseableHttpResponse httpResponse = httpClient.execute(request);
+
+                    log.info(String.format("Performing a request for the URL: %s", request.getURI()));
 
                     decomposedResponse = httpResponseDecomposer(httpResponse);
 
@@ -300,13 +308,15 @@ public class RequestSender {
     }
 
 
-    private HttpPost httpPostBaseSpecification(String url, String contentType, String token){
+    private HttpPost httpPostBaseSpecification(String endpointUri, String contentType, String token){
+
+        String url = String.format("%s%s", baseUri, endpointUri);
 
         HttpPost httpPost;
 
         if (url.startsWith("http:") || url.startsWith("https:")) {
 
-            httpPost = new HttpPost(url);
+            httpPost = new HttpPost(String.format(url));
 
             httpPost.addHeader("Content-Type", contentType);
 
@@ -317,9 +327,11 @@ public class RequestSender {
 
         } else{
 
-            log.error(String.format("The provided URL [ %s ] does seem to be a valid URL", url));
+            String error = String.format(HTTP_SPEC_ERROR, url);
 
-            throw new RuntimeException();
+            log.error(error);
+
+            throw new RuntimeException(error);
 
         }
 
@@ -358,9 +370,11 @@ public class RequestSender {
 
         } else{
 
-            log.error(String.format("The provided URL [ %s ] does seem to be a valid URL", url));
+            String error = String.format(HTTP_SPEC_ERROR, url);
 
-            throw new RuntimeException();
+            log.error(error);
+
+            throw new RuntimeException(error);
 
         }
 
@@ -382,7 +396,9 @@ public class RequestSender {
         return httpPut;
     }
 
-    private HttpGet httpGetBaseSpecification(String url, String token){
+    private HttpGet httpGetBaseSpecification(String endpointUri, String token){
+
+        String url = String.format("%s%s", baseUri, endpointUri);
 
         HttpGet httpGet;
 
@@ -396,9 +412,11 @@ public class RequestSender {
 
         }else{
 
-            log.error(String.format("The provided URL [ %s ] does seem to be a valid URL", url));
+            String error = String.format(HTTP_SPEC_ERROR, url);
 
-            throw new RuntimeException();
+            log.error(error);
+
+            throw new RuntimeException(error);
         }
 
         return httpGet;
@@ -420,9 +438,11 @@ public class RequestSender {
 
         }else{
 
-            log.error(String.format("The provided URL [ %s ] does seem to be a valid URL", url));
+            String error = String.format("The provided URL [ %s ] does seem to be a valid URL", url);
 
-            throw new RuntimeException();
+            log.error(error);
+
+            throw new RuntimeException(error);
         }
 
         return httpDelete;
@@ -461,16 +481,12 @@ public class RequestSender {
         return responseObj;
     }
 
-    private static String generateQudiniAppToken(String userName, String password) {
+    private String generateQudiniAppToken(String userName, String password) {
 
-        String token = new Base64Encoder()
+        return new Base64Encoder()
                 .encode(
                         String.format("%s:%s", userName, password).getBytes())
                 .replaceAll("(?:\\r\\n|\\n\\r|\\n|\\r)", "");
-
-        log.debug(String.format("generated access token: %s", token));
-
-        return token;
 
     }
 
