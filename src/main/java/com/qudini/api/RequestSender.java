@@ -78,7 +78,7 @@ public class RequestSender {
             String charSet)
             throws UnsupportedEncodingException{
 
-        HttpPost httppost = httpPostBaseSpecification(endpointUri,"application/x-www-form-urlencoded", token);
+        HttpPost httppost = (HttpPost) httpBaseSpecification("post", endpointUri,"application/x-www-form-urlencoded", token);
 
         try {
             httppost.setEntity(new UrlEncodedFormEntity(paramsAsNameValuePair, charSet));
@@ -110,7 +110,7 @@ public class RequestSender {
             String contentType)
             throws UnsupportedEncodingException {
 
-        HttpPost httppost = httpPostBaseSpecification(endpointUri, contentType, token);
+        HttpPost httppost = (HttpPost) httpBaseSpecification("post", endpointUri, contentType, token);
 
         try {
             httppost.setEntity(new StringEntity("{}"));
@@ -176,7 +176,7 @@ public class RequestSender {
             String charSet)
             throws UnsupportedEncodingException{
 
-        HttpPut httpPut = httpPutBaseSpecification(endpointUri,"application/x-www-form-urlencoded", token);
+        HttpPut httpPut = (HttpPut) httpBaseSpecification("put", endpointUri,"application/x-www-form-urlencoded", token);
 
         try {
             httpPut.setEntity(new UrlEncodedFormEntity(paramsAsNameValuePair, charSet));
@@ -213,7 +213,7 @@ public class RequestSender {
     protected String sendGet(
             String endpointUri) {
 
-        HttpGet httpGet = httpGetBaseSpecification(endpointUri, token);
+        HttpRequestBase httpGet = httpBaseSpecification("get", endpointUri, token);
 
         return executeRequest(httpGet, false);
     }
@@ -222,7 +222,7 @@ public class RequestSender {
 
     protected String sendDelete(String endpointUri) {
 
-        HttpDelete httpDelete = httpDeleteBaseSpecification(endpointUri, token);
+        HttpRequestBase httpDelete = httpBaseSpecification("delete", endpointUri, token);
 
         return executeRequest(httpDelete, false);
 
@@ -308,19 +308,45 @@ public class RequestSender {
     }
 
 
-    private HttpPost httpPostBaseSpecification(String endpointUri, String contentType, String token){
+    private HttpRequestBase httpMethod(String methodName, String url){
+
+        HttpRequestBase httpRequestBase;
+        String msg = String.format("Generated base http %s specification", methodName);
+
+        switch (methodName.toLowerCase()){
+            case "post":
+                httpRequestBase = new HttpPost(url);
+                break;
+            case "put":
+                httpRequestBase = new HttpPut(url);
+                break;
+            case "get":
+                httpRequestBase = new HttpGet(url);
+                break;
+            case "delete":
+                httpRequestBase = new HttpDelete(url);
+                break;
+            default:
+                String error = "Please use only 'POST, 'PUT', 'GET' or 'DELETE' with this specification";
+                log.error(error);
+                throw new RuntimeException(error);
+        }
+
+        log.debug(msg);
+        return httpRequestBase;
+    }
+
+    private HttpRequestBase httpBaseSpecification(String httpMethod, String endpointUri, String token){
 
         String url = String.format("%s%s", baseUri, endpointUri);
 
-        HttpPost httpPost;
+        HttpRequestBase httpRequestBase;
 
         if (url.startsWith("http:") || url.startsWith("https:")) {
 
-            httpPost = new HttpPost(String.format(url));
+            httpRequestBase = httpMethod(httpMethod, url);
 
-            httpPost.addHeader("Content-Type", contentType);
-
-            httpPost.addHeader("Authorization", "Basic " + token);
+            httpRequestBase.addHeader("Authorization", "Basic " + token);
 
             log.debug("Generated base http POST specification");
 
@@ -335,12 +361,25 @@ public class RequestSender {
 
         }
 
-        return httpPost;
+        return httpRequestBase;
+    }
+
+
+    private HttpRequestBase httpBaseSpecification(String httpMethod, String endpointUri, String contentType, String token){
+
+
+        HttpRequestBase httpRequestBase = httpBaseSpecification(httpMethod, endpointUri, token);
+
+
+        httpRequestBase.addHeader("Content-Type", contentType);
+
+
+        return httpRequestBase;
 
     }
 
     private HttpPost httpPostBaseSpecification(String url, String contentType, String token, String paramsAsString, String charSet) {
-        HttpPost httpPost = httpPostBaseSpecification(url, contentType, token);
+        HttpPost httpPost = (HttpPost) httpBaseSpecification("post", url, contentType, token);
         try{
             httpPost.setEntity(new StringEntity(paramsAsString, charSet));
         }catch (UnsupportedCharsetException e){
@@ -353,37 +392,9 @@ public class RequestSender {
         return httpPost;
     }
 
-    private HttpPut httpPutBaseSpecification(String url, String contentType, String token){
-
-        HttpPut httpPut;
-
-        if (url.startsWith("http:") || url.startsWith("https:")) {
-
-            httpPut = new HttpPut(url);
-
-            httpPut.addHeader("Content-Type", contentType);
-
-            httpPut.addHeader("Authorization", "Basic " + token);
-
-            log.debug("Generated base http PUT specification");
-
-
-        } else{
-
-            String error = String.format(HTTP_SPEC_ERROR, url);
-
-            log.error(error);
-
-            throw new RuntimeException(error);
-
-        }
-
-        return httpPut;
-
-    }
 
     private HttpPut httpPutBaseSpecification(String url, String contentType, String token, String paramsAsString, String charSet) {
-        HttpPut httpPut = httpPutBaseSpecification(url, contentType, token);
+        HttpPut httpPut = (HttpPut) httpBaseSpecification("put", url, contentType, token);
         try{
             httpPut.setEntity(new StringEntity(paramsAsString, charSet));
         }catch (UnsupportedCharsetException e){
@@ -394,59 +405,6 @@ public class RequestSender {
 
 
         return httpPut;
-    }
-
-    private HttpGet httpGetBaseSpecification(String endpointUri, String token){
-
-        String url = String.format("%s%s", baseUri, endpointUri);
-
-        HttpGet httpGet;
-
-        if (url.startsWith("http:") || url.startsWith("https:")) {
-
-            httpGet = new HttpGet(url);
-
-            httpGet.addHeader("Authorization", "Basic " + token);
-
-            log.debug("Generated base http GET specification");
-
-        }else{
-
-            String error = String.format(HTTP_SPEC_ERROR, url);
-
-            log.error(error);
-
-            throw new RuntimeException(error);
-        }
-
-        return httpGet;
-
-    }
-
-
-    private HttpDelete httpDeleteBaseSpecification(String url, String token){
-
-        HttpDelete httpDelete;
-
-        if (url.startsWith("http:") || url.startsWith("https:")) {
-
-            httpDelete = new HttpDelete(url);
-
-            httpDelete.addHeader("Authorization", "Basic " + token);
-
-            log.debug("Generated base http DELETE specification");
-
-        }else{
-
-            String error = String.format("The provided URL [ %s ] does seem to be a valid URL", url);
-
-            log.error(error);
-
-            throw new RuntimeException(error);
-        }
-
-        return httpDelete;
-
     }
 
     private Map<String, String> httpResponseDecomposer(CloseableHttpResponse httpResponse) throws IOException {
