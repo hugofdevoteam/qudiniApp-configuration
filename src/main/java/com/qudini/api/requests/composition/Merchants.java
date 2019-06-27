@@ -40,7 +40,7 @@ public class Merchants {
     private static final String MERCHANT_CSV_HEADER_SALES_ASSIGNEE_KEY = "salesAssigneeKey";
     private static final String MERCHANT_CSV_HEADER_REPORT_WALKOUT_THRESHOLD = "reportWalkoutThreshold";
 
-    public Merchants(RequestSender requestSender){
+    public Merchants(RequestSender requestSender) {
         this.requestSender = requestSender;
     }
 
@@ -148,7 +148,7 @@ public class Merchants {
 
     public static String getMerchantIdByName(
             String merchantResponse,
-            String merchantName){
+            String merchantName) {
 
         List<Integer> ids = JsonPath.read(merchantResponse, String.format(MERCHANT_ID_WITH_NAME, merchantName));
 

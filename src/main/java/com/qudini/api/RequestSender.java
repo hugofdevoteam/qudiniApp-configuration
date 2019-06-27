@@ -52,7 +52,7 @@ public class RequestSender {
     public RequestSender(
             String baseUri,
             String userName,
-            String password){
+            String password) {
 
         this.baseUri = baseUri;
         this.token = generateQudiniAppToken(userName, password);
@@ -67,9 +67,9 @@ public class RequestSender {
     /**
      * Executes a post request with form parameters provided as a list of NameValuePair
      *
-     * @param endpointUri the resource Uri being called
+     * @param endpointUri           the resource Uri being called
      * @param paramsAsNameValuePair list of form key-value object
-     * @param charSet the charset
+     * @param charSet               the charset
      * @return the response as string of the executed request
      * @throws UnsupportedEncodingException
      */
@@ -77,9 +77,9 @@ public class RequestSender {
             String endpointUri,
             List<NameValuePair> paramsAsNameValuePair,
             String charSet)
-            throws UnsupportedEncodingException{
+            throws UnsupportedEncodingException {
 
-        HttpPost httppost = (HttpPost) httpBaseSpecification("post", endpointUri,"application/x-www-form-urlencoded", token);
+        HttpPost httppost = (HttpPost) httpBaseSpecification("post", endpointUri, "application/x-www-form-urlencoded", token);
 
         try {
             httppost.setEntity(new UrlEncodedFormEntity(paramsAsNameValuePair, charSet));
@@ -87,7 +87,7 @@ public class RequestSender {
 
             log.error(String.format("Unsupported encoding for %s", paramsAsNameValuePair
                     .stream()
-                    .map(p -> new HashMap<String,String>().put(p.getName(), p.getValue()))
+                    .map(p -> new HashMap<String, String>().put(p.getName(), p.getValue()))
                     .collect(Collectors.toList())
                     .toString()));
 
@@ -128,11 +128,11 @@ public class RequestSender {
     /**
      * Executes a post request allowing to activate cookies
      *
-     * @param endpointUri the resource Uri being called
-     * @param contentType The content type header value
+     * @param endpointUri    the resource Uri being called
+     * @param contentType    The content type header value
      * @param paramsAsString the payload parameters as string
-     * @param charSet the charset
-     * @param withCookies cookies switch
+     * @param charSet        the charset
+     * @param withCookies    cookies switch
      * @return the response as string of the executed request
      */
     public String sendPost(
@@ -151,10 +151,10 @@ public class RequestSender {
      * Overload of method {@link #sendPost(String, String, String, String, boolean) sendPost}
      * setting the with cookies switch to off (false)
      *
-     * @param endpointUri the resource Uri being called
-     * @param contentType The content type header value
+     * @param endpointUri    the resource Uri being called
+     * @param contentType    The content type header value
      * @param paramsAsString the payload parameters as string
-     * @param charSet the charset
+     * @param charSet        the charset
      * @return the response as string of the executed request
      */
     public String sendPost(
@@ -175,9 +175,9 @@ public class RequestSender {
             String endpointUri,
             List<NameValuePair> paramsAsNameValuePair,
             String charSet)
-            throws UnsupportedEncodingException{
+            throws UnsupportedEncodingException {
 
-        HttpPut httpPut = (HttpPut) httpBaseSpecification("put", endpointUri,"application/x-www-form-urlencoded", token);
+        HttpPut httpPut = (HttpPut) httpBaseSpecification("put", endpointUri, "application/x-www-form-urlencoded", token);
 
         try {
             httpPut.setEntity(new UrlEncodedFormEntity(paramsAsNameValuePair, charSet));
@@ -185,7 +185,7 @@ public class RequestSender {
 
             log.error(String.format("Unsupported encoding for %s", paramsAsNameValuePair
                     .stream()
-                    .map(p -> new HashMap<String,String>().put(p.getName(), p.getValue()))
+                    .map(p -> new HashMap<String, String>().put(p.getName(), p.getValue()))
                     .collect(Collectors.toList())
                     .toString()));
 
@@ -238,7 +238,7 @@ public class RequestSender {
 
         String responseAsStringKey = "responseAsString";
 
-        try{
+        try {
 
             TrustStrategy acceptingTrustStrategy = (cert, authType) -> true;
 
@@ -246,7 +246,7 @@ public class RequestSender {
 
             SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
 
-            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory> create()
+            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
                     .register("https", sslsf)
                     .register("http", new PlainConnectionSocketFactory())
                     .build();
@@ -296,7 +296,7 @@ public class RequestSender {
             }
 
 
-        }catch (NoSuchAlgorithmException | IOException | KeyManagementException | KeyStoreException e){
+        } catch (NoSuchAlgorithmException | IOException | KeyManagementException | KeyStoreException e) {
 
             log.error("An exception has occurred while making the intended requests");
 
@@ -309,12 +309,12 @@ public class RequestSender {
     }
 
 
-    private HttpRequestBase httpMethod(String methodName, String url){
+    private HttpRequestBase httpMethod(String methodName, String url) {
 
         HttpRequestBase httpRequestBase;
         String msg = String.format("Generated base http %s specification", methodName);
 
-        switch (methodName.toLowerCase()){
+        switch (methodName.toLowerCase()) {
             case "post":
                 httpRequestBase = new HttpPost(url);
                 break;
@@ -337,7 +337,7 @@ public class RequestSender {
         return httpRequestBase;
     }
 
-    private HttpRequestBase httpBaseSpecification(String httpMethod, String endpointUri, String token){
+    private HttpRequestBase httpBaseSpecification(String httpMethod, String endpointUri, String token) {
 
         String url = String.format("%s%s", baseUri, endpointUri);
 
@@ -352,7 +352,7 @@ public class RequestSender {
             log.debug("Generated base http POST specification");
 
 
-        } else{
+        } else {
 
             String error = String.format(HTTP_SPEC_ERROR, url);
 
@@ -366,7 +366,7 @@ public class RequestSender {
     }
 
 
-    private HttpRequestBase httpBaseSpecification(String httpMethod, String endpointUri, String contentType, String token){
+    private HttpRequestBase httpBaseSpecification(String httpMethod, String endpointUri, String contentType, String token) {
 
 
         HttpRequestBase httpRequestBase = httpBaseSpecification(httpMethod, endpointUri, token);
@@ -381,9 +381,9 @@ public class RequestSender {
 
     private HttpPost httpPostBaseSpecification(String url, String contentType, String token, String paramsAsString, String charSet) {
         HttpPost httpPost = (HttpPost) httpBaseSpecification("post", url, contentType, token);
-        try{
+        try {
             httpPost.setEntity(new StringEntity(paramsAsString, charSet));
-        }catch (UnsupportedCharsetException e){
+        } catch (UnsupportedCharsetException e) {
             log.error(String.format("The charset [%s] is not valid or cannot be applied to the payload", charSet));
 
             throw e;
@@ -396,9 +396,9 @@ public class RequestSender {
 
     private HttpPut httpPutBaseSpecification(String url, String contentType, String token, String paramsAsString, String charSet) {
         HttpPut httpPut = (HttpPut) httpBaseSpecification("put", url, contentType, token);
-        try{
+        try {
             httpPut.setEntity(new StringEntity(paramsAsString, charSet));
-        }catch (UnsupportedCharsetException e){
+        } catch (UnsupportedCharsetException e) {
             log.error(String.format("The charset [%s] is not valid or cannot be applied to the payload", charSet));
 
             throw e;
@@ -429,7 +429,7 @@ public class RequestSender {
 
             log.info(String.format("Request was successful - status code: %s ", responseObj.get(statusCode)));
 
-        } else if (parseInt(responseObj.get(statusCode)) >= 400){
+        } else if (parseInt(responseObj.get(statusCode)) >= 400) {
 
             log.error(statusCodeErrorMsg);
             log.error(responseBodyErrorMsg);

@@ -34,7 +34,7 @@ public class Queues {
 
     private static final String VENUE_ID = "venueId";
 
-    public Queues(RequestSender requestSender){
+    public Queues(RequestSender requestSender) {
         this.requestSender = requestSender;
         this.venues = new Venues(requestSender);
     }
@@ -116,7 +116,6 @@ public class Queues {
         log.debug(String.format("Obtained response from create queue: %s", response));
 
     }
-
 
 
 }

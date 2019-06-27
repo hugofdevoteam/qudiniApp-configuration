@@ -2,7 +2,8 @@ package com.qudini.api.rest.endpoints;
 
 public final class MerchantEndpoints {
 
-    private MerchantEndpoints(){}
+    private MerchantEndpoints() {
+    }
 
     public static final String ADD_MERCHANT = "/api-merchant-add";
 

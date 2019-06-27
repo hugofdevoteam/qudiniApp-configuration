@@ -29,7 +29,7 @@ public class Venues {
     private static final String VENUE_CSV_HEADER_MERCHANT_NAME = "merchantName";
     private static final String VENUE_CSV_HEADER_VENUE_NAME = "venueName";
 
-    public Venues(RequestSender requestSender){
+    public Venues(RequestSender requestSender) {
         this.requestSender = requestSender;
     }
 
@@ -73,7 +73,7 @@ public class Venues {
 
         String merchantId = getMerchantId(merchantName);
 
-        if (!merchantId.equals("")){
+        if (!merchantId.equals("")) {
 
             log.info(String.format("Found the id [ %s ] for the merchant with name [ %s ]", merchantId, merchantName));
 
@@ -86,7 +86,7 @@ public class Venues {
                             merchantName,
                             resourceUri));
 
-            String response = requestSender.sendPost(resourceUri,"application/json");
+            String response = requestSender.sendPost(resourceUri, "application/json");
 
             log.debug(String.format("Response for create venue: %s", response));
 
@@ -100,7 +100,7 @@ public class Venues {
 
     public String getVenueIdByName(
             String merchantName,
-            String venueName){
+            String venueName) {
 
         String merchantId = getMerchantId(merchantName);
 
@@ -119,7 +119,7 @@ public class Venues {
 
     // PRIVATE METHODS
 
-    private String getMerchantId(String merchantName){
+    private String getMerchantId(String merchantName) {
 
         log.info(String.format("Request information for all the contact merchants using the endpoint URI: %s", GET_ALL_MERCHANTS_FOR_CONTACT));
 
