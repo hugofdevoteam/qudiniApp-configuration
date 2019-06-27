@@ -2,12 +2,15 @@ package com.qudini;
 
 import com.qudini.api.RequestSender;
 import com.qudini.api.requests.composition.Merchants;
+import com.qudini.api.requests.composition.Products;
 import com.qudini.api.requests.composition.Queues;
 import com.qudini.api.requests.composition.Venues;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.qudini.configuration.GlobalConfiguration.*;
 
@@ -28,6 +31,9 @@ public class QudiniAppDataGenerator {
 
         Merchants merchants = new Merchants(requestSender);
 
+        List<String> bookingFor = new ArrayList<>();
+        bookingFor.add("Booking");
+
         log.info(String.format("QudiniApp data generator started for environment: %s" , getEnv().toUpperCase()));
         log.info("QudiniApp Base URL: " + appBaseUrl + " QudiniApp User: " + admin_username); //" QudiniApp Password: " + admin_password
 
@@ -36,6 +42,9 @@ public class QudiniAppDataGenerator {
             new Venues(requestSender).createVenues();
 
             new Queues(requestSender).createQueues();
+            Products products = new Products(requestSender);
+            products.createProductsAssociatedToQueues();
+            products.showProductFor(bookingFor);
         }catch (IOException e) {
             e.printStackTrace();
         }

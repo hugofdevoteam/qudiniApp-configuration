@@ -312,7 +312,7 @@ public class RequestSender {
     private HttpRequestBase httpMethod(String methodName, String url) {
 
         HttpRequestBase httpRequestBase;
-        String msg = String.format("Generated base http %s specification", methodName);
+        String msg = String.format("Generated base http %s specification", methodName.toUpperCase());
 
         switch (methodName.toLowerCase()) {
             case "post":
@@ -348,9 +348,6 @@ public class RequestSender {
             httpRequestBase = httpMethod(httpMethod, url);
 
             httpRequestBase.addHeader("Authorization", "Basic " + token);
-
-            log.debug("Generated base http POST specification");
-
 
         } else {
 

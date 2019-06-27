@@ -1,6 +1,7 @@
 package com.qudini.api.requests.composition;
 
 import com.qudini.api.RequestSender;
+import com.qudini.api.requests.utils.QudiniAppResponseDataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -25,7 +26,7 @@ public class Queues {
 
     private RequestSender requestSender;
 
-    private Venues venues;
+    private QudiniAppResponseDataUtils qudiniAppResponseDataUtils;
 
     private static final String QUEUES_CSV_HEADER_MERCHANT_NAME = "merchantName";
     private static final String QUEUES_CSV_HEADER_VENUE_NAME = "venueName";
@@ -36,7 +37,7 @@ public class Queues {
 
     public Queues(RequestSender requestSender) {
         this.requestSender = requestSender;
-        this.venues = new Venues(requestSender);
+        this.qudiniAppResponseDataUtils = new QudiniAppResponseDataUtils(requestSender);
     }
 
 
@@ -82,7 +83,7 @@ public class Queues {
             String averageServeTime)
             throws UnsupportedEncodingException {
 
-        String venueId = venues.getVenueIdByName(merchantName, venueName);
+        String venueId = qudiniAppResponseDataUtils.getVenueIdByName(merchantName, venueName);
 
         List<NameValuePair> paramsAsNameValuePairList = new ArrayList<>();
 

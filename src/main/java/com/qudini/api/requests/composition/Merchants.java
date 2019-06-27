@@ -146,17 +146,6 @@ public class Merchants {
     }
 
 
-    public static String getMerchantIdByName(
-            String merchantResponse,
-            String merchantName) {
-
-        List<Integer> ids = JsonPath.read(merchantResponse, String.format(MERCHANT_ID_WITH_NAME, merchantName));
-
-        return ids.get(0).toString();
-
-    }
-
-
 }
 
 

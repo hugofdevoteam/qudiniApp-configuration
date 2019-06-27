@@ -1,7 +1,7 @@
 package com.qudini.api.requests.composition;
 
-import com.jayway.jsonpath.JsonPath;
 import com.qudini.api.RequestSender;
+import com.qudini.api.requests.utils.QudiniAppResponseDataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -12,25 +12,22 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 
-import static com.qudini.api.requests.composition.Merchants.getMerchantIdByName;
-import static com.qudini.api.rest.endpoints.MerchantEndpoints.GET_ALL_MERCHANTS_FOR_CONTACT;
 import static com.qudini.api.rest.endpoints.VenueEndpoints.ADD_MERCHANT_VENUE;
-import static com.qudini.api.rest.endpoints.VenueEndpoints.GET_VENUE_FOR_MERCHANT_ID;
-import static com.qudini.api.rest.json.paths.VenuePaths.VENUE_ID_WITH_NAME;
 
 
 @Slf4j
 public class Venues {
 
     private RequestSender requestSender;
+    private QudiniAppResponseDataUtils qudiniAppResponseDataUtils;
 
     private static final String VENUE_CSV_HEADER_MERCHANT_NAME = "merchantName";
     private static final String VENUE_CSV_HEADER_VENUE_NAME = "venueName";
 
     public Venues(RequestSender requestSender) {
         this.requestSender = requestSender;
+        this.qudiniAppResponseDataUtils = new QudiniAppResponseDataUtils(requestSender);
     }
 
     public void createVenues()
@@ -71,7 +68,7 @@ public class Venues {
             throws UnsupportedEncodingException {
 
 
-        String merchantId = getMerchantId(merchantName);
+        String merchantId = qudiniAppResponseDataUtils.getMerchantId(merchantName);
 
         if (!merchantId.equals("")) {
 
@@ -98,36 +95,9 @@ public class Venues {
 
     }
 
-    public String getVenueIdByName(
-            String merchantName,
-            String venueName) {
-
-        String merchantId = getMerchantId(merchantName);
-
-        String venueResponse = requestSender.sendGet(String.format(GET_VENUE_FOR_MERCHANT_ID, merchantId));
-
-        log.debug(String.format("Fetching venue Id for the venue name: %s", venueName));
-
-        List<Integer> ids = JsonPath.read(venueResponse, String.format(VENUE_ID_WITH_NAME, venueName));
-
-        log.info(String.format("Found the id %s for the venue with the name [ %s ]", ids.get(0).toString(), venueName));
-
-        return ids.get(0).toString();
-
-    }
 
 
     // PRIVATE METHODS
 
-    private String getMerchantId(String merchantName) {
 
-        log.info(String.format("Request information for all the contact merchants using the endpoint URI: %s", GET_ALL_MERCHANTS_FOR_CONTACT));
-
-        String getMerchantsResponse = requestSender.sendGet(GET_ALL_MERCHANTS_FOR_CONTACT);
-
-        log.debug(String.format("Fetching merchant Id for the merchant name: %s", merchantName));
-
-        return getMerchantIdByName(getMerchantsResponse, merchantName);
-
-    }
 }
