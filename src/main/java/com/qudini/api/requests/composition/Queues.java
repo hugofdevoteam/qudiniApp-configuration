@@ -1,6 +1,7 @@
 package com.qudini.api.requests.composition;
 
 import com.qudini.api.RequestSender;
+import com.qudini.api.requests.forms.QueueDetails;
 import com.qudini.api.requests.utils.QudiniAppResponseDataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.qudini.api.rest.endpoints.QueueEndpoints.ADD_VENUE_QUEUE;
+import static com.qudini.api.rest.endpoints.QueueEndpoints.CHANGE_QUEUE_DETAILS;
 
 
 @Slf4j
@@ -27,6 +29,7 @@ public class Queues {
     private RequestSender requestSender;
 
     private QudiniAppResponseDataUtils qudiniAppResponseDataUtils;
+    private QueueDetails queueDetails;
 
     private static final String QUEUES_CSV_HEADER_MERCHANT_NAME = "merchantName";
     private static final String QUEUES_CSV_HEADER_VENUE_NAME = "venueName";
@@ -35,16 +38,19 @@ public class Queues {
 
     private static final String VENUE_ID = "venueId";
 
+    private static final String DEFAULT_QUEUE_FILE_PATH = "src/main/resources/data/queues.csv";
+
     public Queues(RequestSender requestSender) {
         this.requestSender = requestSender;
         this.qudiniAppResponseDataUtils = new QudiniAppResponseDataUtils(requestSender);
+        this.queueDetails = new QueueDetails();
     }
 
 
     public void createQueues()
             throws IOException {
 
-        createQueues("src/main/resources/data/queues.csv");
+        createQueues(DEFAULT_QUEUE_FILE_PATH);
 
     }
 
@@ -117,6 +123,67 @@ public class Queues {
         log.debug(String.format("Obtained response from create queue: %s", response));
 
     }
+
+    public void enableBookingWithDefaultQueuesDetailsUsingCSV() throws IOException {
+
+        try (
+                Reader reader = Files.newBufferedReader(Paths.get(DEFAULT_QUEUE_FILE_PATH));
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withIgnoreHeaderCase()
+                        .withTrim())
+        ) {
+            for (CSVRecord csvRecord : csvParser) {
+
+                enableBookingWithDefaultQueueDetails(
+                        csvRecord.get(QUEUES_CSV_HEADER_MERCHANT_NAME),
+                        csvRecord.get(QUEUES_CSV_HEADER_VENUE_NAME),
+                        csvRecord.get(QUEUES_CSV_HEADER_QUEUE_NAME),
+                        csvRecord.get(QUEUES_CSV_HEADER_AVG_SERVE_TIME));
+
+            }
+        } catch (IOException e) {
+            log.error(String.format("There was a problem with the stated csv file or filepath: %s", DEFAULT_QUEUE_FILE_PATH));
+            throw e;
+        }
+    }
+
+    public void enableBookingWithDefaultQueueDetails(
+            String merchantName,
+            String venueName,
+            String queueName,
+            String averageServeTime
+            ) throws UnsupportedEncodingException {
+
+        log.debug(String.format("Obtaining venue id from venue name [%s]", venueName));
+
+        String venueId = qudiniAppResponseDataUtils.getVenueIdByName(merchantName, venueName);
+
+        log.debug("Obtaining queue id and identifier");
+
+        List<String> queueIdentifications = qudiniAppResponseDataUtils.getQueueIdentifications(venueId, queueName);
+        String queueId = queueIdentifications.get(0);
+        String queueIdentification = queueIdentifications.get(1);
+
+        log.debug("Obtaining queue SNS Topic identification");
+
+        String snsTopicIdentification = qudiniAppResponseDataUtils.getTopicIdFromQueueDetails(queueIdentification);
+
+        List<NameValuePair> formPropertiesForEnableBooking = queueDetails.defaultPropertiesForQueueDetailsWithBookingEnabled(
+                queueId,
+                queueIdentification,
+                queueName,
+                averageServeTime,
+                snsTopicIdentification);
+
+        log.info(String.format("Calling the endpoint uri [ %s ] to activate the queue for booking in the queue details", CHANGE_QUEUE_DETAILS));
+
+        String response = requestSender.sendPut(CHANGE_QUEUE_DETAILS,formPropertiesForEnableBooking,"UTF-8");
+
+        log.debug(String.format("After changing the queue details obtain the response : %n%s", response));
+
+    }
+
 
 
 }

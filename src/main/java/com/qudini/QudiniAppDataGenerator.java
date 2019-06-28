@@ -41,10 +41,13 @@ public class QudiniAppDataGenerator {
             merchants.createMerchants();
             new Venues(requestSender).createVenues();
 
-            new Queues(requestSender).createQueues();
+            Queues queues = new Queues(requestSender);
+            queues.createQueues();
             Products products = new Products(requestSender);
             products.createProductsAssociatedToQueues();
             products.showProductFor(bookingFor);
+            queues.enableBookingWithDefaultQueuesDetailsUsingCSV();
+
         }catch (IOException e) {
             e.printStackTrace();
         }

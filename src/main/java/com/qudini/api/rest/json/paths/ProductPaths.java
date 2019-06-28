@@ -1,6 +1,6 @@
 package com.qudini.api.rest.json.paths;
 
-public class ProductPaths {
+public final class ProductPaths {
 
     private ProductPaths() {
     }
