@@ -207,7 +207,10 @@ public class Products {
             String averageServeTimeMinutes,
             List<String> queues){
 
-        JSONObject jsonObject = createProductAssociatedToQueuesPayload(merchantName, productName, averageServeTimeMinutes);
+        JSONObject jsonObject = createProductAssociatedToQueuesPayload(
+                merchantName,
+                productName,
+                averageServeTimeMinutes);
         jsonObject.put(PRODUCT_CSV_HEADER_QUEUES, queues);
 
         return jsonObject;
