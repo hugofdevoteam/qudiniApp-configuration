@@ -8,7 +8,6 @@ import com.qudini.api.requests.composition.Venues;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,9 +18,6 @@ public class QudiniAppDataGenerator {
 
 
     public static void main(String args[]) throws IOException {
-
-
-        //Queues queues = new Queues();
 
         String appBaseUrl = configuration.getQudiniAppStaticData().getBaseuri();
         String admin_username = configuration.getQudiniAppStaticData().getUser();
@@ -46,14 +42,10 @@ public class QudiniAppDataGenerator {
             Products products = new Products(requestSender);
             products.createProductsAssociatedToQueues();
 
-            //products.showProductFor(bookingFor);
-            //queues.enableBookingWithDefaultQueuesDetailsUsingCSV();
 
         }catch (IOException e) {
             e.printStackTrace();
         }
-
-
 
     }
 }

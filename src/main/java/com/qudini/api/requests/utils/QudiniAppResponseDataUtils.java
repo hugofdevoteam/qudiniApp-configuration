@@ -207,7 +207,7 @@ public class QudiniAppResponseDataUtils {
 
         List<Integer> ids = JsonPath.read(productsForMerchantIdResponse, String.format(PRODUCT_ID_WITH_NAME, productName));
 
-        log.info(String.format("Found the product id %s matching the product name [ %s ]", ids.toString(), productName));
+        log.info(String.format("Found the product id [ %s ] matching the product name [ %s ]", ids.toString(), productName));
 
         return ids.get(0).toString();
 

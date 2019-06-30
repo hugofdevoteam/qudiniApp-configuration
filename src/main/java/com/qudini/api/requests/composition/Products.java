@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.qudini.api.rest.endpoints.Products.ADD_PRODUCT_QUEUES;
-import static com.qudini.api.rest.endpoints.VenueEndpoints.GET_VENUE_FOR_MERCHANT_ID;
 import static com.qudini.api.rest.json.paths.QueuePaths.*;
 import static java.lang.Integer.parseInt;
 
@@ -32,9 +31,11 @@ public class Products {
     private static final String PRODUCT_CSV_HEADER_PRODUCT_NAME = "productName";
     private static final String PRODUCT_CSV_HEADER_AVG_SERVE_TIME_MIN = "averageServeTimeMinutes";
     private static final String PRODUCT_CSV_HEADER_QUEUES = "queues"; //space separated queues
+    private static final String PRODUCT_CSV_HEADER_BOOKING_FOR = "bookingFor"; // space separated booking and/or queue
 
     private static final String MERCHANT_ID = "merchantId";
     private static final String TYPE = "type";
+    private static final String PRODUCT_ID = "productId";
 
     public Products(RequestSender requestSender) {
         this.requestSender = requestSender;
@@ -72,7 +73,8 @@ public class Products {
                         csvRecord.get(PRODUCT_CSV_HEADER_MERCHANT_NAME),
                         csvRecord.get(PRODUCT_CSV_HEADER_PRODUCT_NAME),
                         csvRecord.get(PRODUCT_CSV_HEADER_AVG_SERVE_TIME_MIN),
-                        Arrays.asList(csvRecord.get(PRODUCT_CSV_HEADER_QUEUES).split(" "))
+                        Arrays.asList(csvRecord.get(PRODUCT_CSV_HEADER_QUEUES).split(" ")),
+                        Arrays.asList(csvRecord.get(PRODUCT_CSV_HEADER_BOOKING_FOR).split(" "))
                 );
             }
 
@@ -81,21 +83,26 @@ public class Products {
                 throw e;
             }
 
-
     }
 
     public void createProductAssociatedToQueues(
             String merchantName,
             String productName,
             String averageServeTimeMinutes,
-            List<String> queues) {
+            List<String> queues,
+            List<String> bookingFor) {
+
+        log.info(String.format("Creating a product for merchant [ %s ] with product name [ %s ]", merchantName, productName));
+        createSimpleProduct(merchantName,productName,averageServeTimeMinutes);
 
         JSONObject jsonObject = createProductAssociatedToQueuesPayload(
                 merchantName,
                 productName,
                 averageServeTimeMinutes,
-                queues);
+                queues,
+                bookingFor);
 
+        log.info(String.format("Associating product [ %s ] with queue(s) [ %s ]", productName, queues));
         createProductAssociatedToQueues(jsonObject.toJSONString());
 
     }
@@ -105,93 +112,21 @@ public class Products {
         log.info(String.format("App is making a call to the resourceUri [%s] to create a product with the info: %s",
                 ADD_PRODUCT_QUEUES, paramsAsJsonString));
 
-        requestSender.sendPost(
+        String response = requestSender.sendPost(
                 ADD_PRODUCT_QUEUES,
                 "application/json",
                 paramsAsJsonString,
                 "UTF-8");
 
+        log.debug(String.format("Response from linking product queue(s): %n%s", response));
+
     }
 
-    // ADD PRODUCT TO BOOKING, QUEUE OR BOTH
-
-
-//    public void showProductFor(List<String> bookingFor) throws IOException {
-//
-//        showProductFor("src/main/resources/data/products.csv", bookingFor);
-//
-//    }
-//
-//    public void showProductFor(String productsFilePath, List<String> bookingFor) throws IOException {
-//
-//        try (
-//                Reader reader = Files.newBufferedReader(Paths.get(productsFilePath));
-//                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-//                        .withFirstRecordAsHeader()
-//                        .withIgnoreHeaderCase()
-//                        .withTrim())
-//        ){
-//            for (CSVRecord csvRecord : csvParser) {
-//
-//                showProductFor(
-//                        csvRecord.get(PRODUCT_CSV_HEADER_MERCHANT_NAME),
-//                        csvRecord.get(PRODUCT_CSV_HEADER_PRODUCT_NAME),
-//                        csvRecord.get(PRODUCT_CSV_HEADER_AVG_SERVE_TIME_MIN),
-//                        bookingFor
-//                );
-//            }
-//
-//        }catch (IOException e) {
-//            log.error(String.format("There was a problem accessing or reading the csv file or filepath: %s", productsFilePath));
-//            throw e;
-//        }
-//
-//
-//
-//    }
-//
-//    public void showProductFor(
-//            String merchantName,
-//            String productName,
-//            String averageServeTimeMinutes,
-//            List<String> bookingFor){
-//
-//        JSONObject jsonPriceObj = new JSONObject();
-//        jsonPriceObj.put("amount", null);
-//        jsonPriceObj.put("currency", null);
-//
-//        Integer productId = parseInt(qudiniAppResponseDataUtils.getProductIdByProductNameForMerchantId(merchantName, productName));
-//
-//        JSONObject jsonObject = createProductAssociatedToQueuesPayload(merchantName, productName, averageServeTimeMinutes);
-//
-//        jsonObject.put("productId", productId);
-//        jsonObject.put("bookingFor", bookingFor);
-//        jsonObject.put("iconId", null);
-//        jsonObject.put("maxAddons", null);
-//        jsonObject.put("updateKiosk", false);
-//        jsonObject.put("colour", null);
-//        jsonObject.put("priority", 0);
-//        jsonObject.put("description", null);
-//        jsonObject.put("price", jsonPriceObj);
-//
-//        log.info(String.format("Performing a request to [ %s ] with the payload: %n%s ", ADD_PRODUCT_QUEUES, jsonObject.toJSONString()));
-//
-//        String response = requestSender.sendPost(
-//                ADD_PRODUCT_QUEUES,
-//                "application/json",
-//                jsonObject.toJSONString(),
-//                "UTF-8");
-//
-//        log.debug(String.format("Response obtained for activating a product for %s: %n%s",bookingFor.toString(), response));
-//
-//    }
-
-
-    //PRIVATE METHODS
-    private JSONObject createProductAssociatedToQueuesPayload(
+    public void createSimpleProduct(
             String merchantName,
             String productName,
-            String averageServeTimeMinutes){
+            String averageServeTimeMinutes
+            ){
 
         Integer merchantId = parseInt(qudiniAppResponseDataUtils.getMerchantId(merchantName));
 
@@ -199,7 +134,45 @@ public class Products {
         jsonObject.put(MERCHANT_ID, merchantId);
         jsonObject.put(PRODUCT_CSV_HEADER_PRODUCT_NAME, productName);
         jsonObject.put(PRODUCT_CSV_HEADER_AVG_SERVE_TIME_MIN, averageServeTimeMinutes);
+        jsonObject.put(PRODUCT_CSV_HEADER_QUEUES, "[]");
         jsonObject.put(TYPE,"PRODUCT");
+
+        requestSender.sendPost(
+                ADD_PRODUCT_QUEUES,
+                "application/json",
+                jsonObject.toJSONString(),
+                "UTF-8");
+
+    }
+
+    //PRIVATE METHODS
+    private JSONObject createProductAssociatedToQueuesPayload(
+            String merchantName,
+            String productName,
+            String averageServeTimeMinutes,
+            List<String> bookingFor){
+
+        JSONObject jsonPriceObj = new JSONObject();
+        jsonPriceObj.put("amount", null);
+        jsonPriceObj.put("currency", null);
+
+        Integer merchantId = parseInt(qudiniAppResponseDataUtils.getMerchantId(merchantName));
+        Integer productId = parseInt(qudiniAppResponseDataUtils.getProductIdByProductNameForMerchantId(merchantName, productName));
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(MERCHANT_ID, merchantId);
+        jsonObject.put(PRODUCT_ID, productId);
+        jsonObject.put(PRODUCT_CSV_HEADER_PRODUCT_NAME, productName);
+        jsonObject.put(PRODUCT_CSV_HEADER_AVG_SERVE_TIME_MIN, averageServeTimeMinutes);
+        jsonObject.put(PRODUCT_CSV_HEADER_BOOKING_FOR, bookingFor);
+        jsonObject.put("iconId", null);
+        jsonObject.put("maxAddons", null);
+        jsonObject.put("updateKiosk", false);
+        jsonObject.put("colour", null);
+        jsonObject.put("priority", 0);
+        jsonObject.put("description", null);
+        jsonObject.put(TYPE,"PRODUCT");
+        jsonObject.put("price", jsonPriceObj);
 
         return jsonObject;
     }
@@ -209,13 +182,23 @@ public class Products {
             String merchantName,
             String productName,
             String averageServeTimeMinutes,
-            List<String> queuesNames){
+            List<String> queuesNames,
+            List<String> bookingFor){
 
         JSONObject jsonObject = createProductAssociatedToQueuesPayload(
                 merchantName,
                 productName,
-                averageServeTimeMinutes);
+                averageServeTimeMinutes,
+                bookingFor);
+
+        //Json Arrays
         jsonObject.put(PRODUCT_CSV_HEADER_QUEUES, createQueuesToProductArray(merchantName, queuesNames));
+
+        log.debug(String.format("Created the Json Object to link product [ %s ] and queues [ %s ] showing for [ %s ]: %n%s",
+                productName,
+                queuesNames,
+                bookingFor,
+                jsonObject));
 
         return jsonObject;
     }
@@ -257,8 +240,8 @@ public class Products {
                     newQueueJSONObj.put("id", queueId);
                     newQueueJSONObj.put("venueId", venueId);
                     newQueueJSONObj.put("venueName", queueVenueName);
-                    newQueueJSONObj.put("merchantId", merchantId);
-                    newQueueJSONObj.put("merchantName", merchantName);
+                    newQueueJSONObj.put(MERCHANT_ID, merchantId);
+                    newQueueJSONObj.put(PRODUCT_CSV_HEADER_MERCHANT_NAME, merchantName);
                     newQueueJSONObj.put("selected", true);
 
                     log.debug(String.format("Adding the following object to the Queues Array [ %s ]", newQueueJSONObj.toString()));
