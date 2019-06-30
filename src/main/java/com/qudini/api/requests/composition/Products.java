@@ -1,5 +1,6 @@
 package com.qudini.api.requests.composition;
 
+import com.jayway.jsonpath.JsonPath;
 import com.qudini.api.RequestSender;
 import com.qudini.api.requests.utils.QudiniAppResponseDataUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.qudini.api.rest.endpoints.Products.ADD_PRODUCT_QUEUES;
+import static com.qudini.api.rest.endpoints.VenueEndpoints.GET_VENUE_FOR_MERCHANT_ID;
+import static com.qudini.api.rest.json.paths.QueuePaths.*;
 import static java.lang.Integer.parseInt;
 
 @Slf4j
@@ -212,14 +215,63 @@ public class Products {
                 merchantName,
                 productName,
                 averageServeTimeMinutes);
-        jsonObject.put(PRODUCT_CSV_HEADER_QUEUES, queuesNames);
+        jsonObject.put(PRODUCT_CSV_HEADER_QUEUES, createQueuesToProductArray(merchantName, queuesNames));
 
         return jsonObject;
     }
 
     private JSONArray createQueuesToProductArray(String merchantName, List<String> queuesNames){
 
-        String merchantid = qudiniAppResponseDataUtils.getMerchantId(merchantName);
+        JSONArray queuesArray = new JSONArray();
+
+        String merchantId = qudiniAppResponseDataUtils.getMerchantId(merchantName);
+
+        List<Integer> venuesIds = qudiniAppResponseDataUtils.getVenuesIdsForMerchantId(merchantId);
+
+        for (Integer venueId : venuesIds){
+
+            String queueInfoResponseFromVenueId = qudiniAppResponseDataUtils.getQueueInfoPerVenueId(String.valueOf(venueId));
+
+            List<String> queueNamesFromVenueId = qudiniAppResponseDataUtils.extractQueueNamesOnResponse(queueInfoResponseFromVenueId);
+
+            for (String extractedQueueName: queueNamesFromVenueId){
+
+                if(queuesNames.contains(extractedQueueName)){
+
+                    log.info(String.format("List of queues [ %s ] contain the queue name [ %s ] the needed info will be added to the queue array to link it to the product",
+                            queuesNames, extractedQueueName));
+
+                    //MUST BE EXTRACTED FOR THE extractedQueueName
+                    List<String> queuesIdentifier = JsonPath.read(queueInfoResponseFromVenueId, String.format(RETRIEVE_QUEUE_DETAILS_QUEUE_IDENTIFIER_FOR_QUEUE_WITH_NAME,extractedQueueName));
+                    String queueIdentifier = queuesIdentifier.get(0);
+
+                    List<Integer> queuesId = JsonPath.read(queueInfoResponseFromVenueId, String.format(RETRIEVE_QUEUE_DETAILS_QUEUE_ID_FOR_QUEUE_WITH_NAME, extractedQueueName));
+                    Integer queueId = queuesId.get(0);
+
+                    List<String> queuesVenueName = JsonPath.read(queueInfoResponseFromVenueId, String.format(RETRIEVE_VENUE_NAME_FROM_QUEUES_IN_VENUE_RESPONSE, extractedQueueName));
+                    String queueVenueName = queuesVenueName.get(0);
+
+                    JSONObject newQueueJSONObj = new JSONObject();
+                    newQueueJSONObj.put("identifier", queueIdentifier);
+                    newQueueJSONObj.put("name", extractedQueueName);
+                    newQueueJSONObj.put("id", queueId);
+                    newQueueJSONObj.put("venueId", venueId);
+                    newQueueJSONObj.put("venueName", queueVenueName);
+                    newQueueJSONObj.put("merchantId", merchantId);
+                    newQueueJSONObj.put("merchantName", merchantName);
+                    newQueueJSONObj.put("selected", true);
+
+                    log.debug(String.format("Adding the following object to the Queues Array [ %s ]", newQueueJSONObj.toString()));
+
+                    queuesArray.add(newQueueJSONObj);
+
+                }
+
+            }
+
+        }
+        log.debug(String.format("Returning the following Queues Array to link it to the product: %n%s", queuesArray.toString()));
+        return queuesArray;
 
     }
 

@@ -13,4 +13,6 @@ public final class QueueEndpoints {
 
     public static final String CHANGE_QUEUE_DETAILS = "/api/queue/details";
 
+    public static final String QUEUES_INFO_FOR_EACH_VENUE = "/api/v3/venues/%s/queues";
+
 }

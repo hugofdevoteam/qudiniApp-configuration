@@ -6,7 +6,15 @@ public final class QueuePaths {
 
     public static final String QUEUE_DETAILS_SNS_TOPIC_VALUE = "$.queueData.queue.snsTopicArn";
 
-    public static final String QUEUE_DETAILS_QUEUE_ID = "$.[?(@.name=='%s')].id";
+    //Works also for retrieving data from the response of getQueueInfoPerVenueId
+    public static final String RETRIEVE_QUEUE_DETAILS_QUEUE_ID_FOR_QUEUE_WITH_NAME = "$.[?(@.name=='%s')].id";
 
-    public static final String QUEUE_DETAILS_QUEUE_IDENTIFIER = "$.[?(@.name=='%s')].identifier";
+    //Works also for retrieving data from the response of getQueueInfoPerVenueId
+    public static final String RETRIEVE_QUEUE_DETAILS_QUEUE_IDENTIFIER_FOR_QUEUE_WITH_NAME = "$.[?(@.name=='%s')].identifier";
+
+    public static final String RETRIEVE_QUEUES_NAMES_FOR_VENUE_QUEUES = "$.[*].name";
+
+    // THIS COME FROM THE RESPONSE OF getQueueInfoPerVenueId USED ON QUEUE ARRAY OBJ TO LINK PRODUCT TO QUEUES
+
+    public static final String RETRIEVE_VENUE_NAME_FROM_QUEUES_IN_VENUE_RESPONSE = "$.[?(@.name=='%s')].venueName";
 }

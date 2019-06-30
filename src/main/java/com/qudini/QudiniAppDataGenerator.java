@@ -45,8 +45,9 @@ public class QudiniAppDataGenerator {
             queues.createQueues();
             Products products = new Products(requestSender);
             products.createProductsAssociatedToQueues();
-            products.showProductFor(bookingFor);
-            queues.enableBookingWithDefaultQueuesDetailsUsingCSV();
+
+            //products.showProductFor(bookingFor);
+            //queues.enableBookingWithDefaultQueuesDetailsUsingCSV();
 
         }catch (IOException e) {
             e.printStackTrace();

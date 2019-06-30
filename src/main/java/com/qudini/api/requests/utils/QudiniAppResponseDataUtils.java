@@ -9,12 +9,12 @@ import java.util.List;
 
 import static com.qudini.api.rest.endpoints.MerchantEndpoints.GET_ALL_MERCHANTS_FOR_CONTACT;
 import static com.qudini.api.rest.endpoints.Products.GET_PRODUCTS_FOR_MERCHANT_ID;
-import static com.qudini.api.rest.endpoints.QueueEndpoints.LIST_QUEUES_ADMIN_DATA;
-import static com.qudini.api.rest.endpoints.QueueEndpoints.LIST_QUEUE_DETAILS;
+import static com.qudini.api.rest.endpoints.QueueEndpoints.*;
 import static com.qudini.api.rest.endpoints.VenueEndpoints.GET_VENUE_FOR_MERCHANT_ID;
 import static com.qudini.api.rest.json.paths.MerchantPaths.MERCHANT_ID_WITH_NAME;
 import static com.qudini.api.rest.json.paths.ProductPaths.PRODUCT_ID_WITH_NAME;
 import static com.qudini.api.rest.json.paths.QueuePaths.*;
+import static com.qudini.api.rest.json.paths.VenuePaths.VENUES_IDS_FOR_MERCHANT_ID;
 import static com.qudini.api.rest.json.paths.VenuePaths.VENUE_ID_WITH_NAME;
 
 @Slf4j
@@ -132,6 +132,60 @@ public class QudiniAppResponseDataUtils {
 
     }
 
+    public List<Integer> getVenuesIdsForMerchantId(String merchantId){
+
+        String endpointUri = String.format(GET_VENUE_FOR_MERCHANT_ID, merchantId);
+
+        log.info(String.format("Fetching the venues information for the merchant with the id [ %s ] using the endpoint [ %s ]", merchantId, endpointUri));
+
+        String response = requestSender.sendGet(endpointUri);
+
+        log.debug(String.format("Obtain the following venues information: %n%s", response));
+
+        log.info(String.format("Extracting a list of venues ids for the merchant with id [ %s ]", merchantId));
+
+        List<Integer> venuesIds = JsonPath.read(response, VENUES_IDS_FOR_MERCHANT_ID);
+
+        log.info(String.format("Obtained the list venues ids [ %s ] for merchant with id [ %s ]", venuesIds.toString(), merchantId));
+
+        return venuesIds;
+
+    }
+
+    /**
+     * Returns the full information of queues linked to each venue
+     *
+     * @param venueId the venue Id
+     * @return full response
+     */
+    public String getQueueInfoPerVenueId(String venueId){
+
+        String endpoint = String.format(QUEUES_INFO_FOR_EACH_VENUE, venueId);
+
+        log.info(String.format("Getting queues info for venue Id [ %s] using the endpoint [ %s ]", venueId, endpoint));
+
+        String response = requestSender.sendGet(endpoint);
+
+        log.debug(String.format("Obtained the following queues info response for venue with id [ %s ]: %n%s", venueId, response));
+
+        return response;
+    }
+
+
+    /**
+     * Method that returns a list of queue names that it may be found in the response provided by
+     * {@link #getQueueInfoPerVenueId(String) getQueueInfoPerVenueId}
+     *
+     * @return List of queue names
+     */
+    public List<String> extractQueueNamesOnResponse(String queueInfoPerVenueIdResponse){
+
+        log.debug("Extracting the queue names from the queue info per venue response");
+
+        return JsonPath.read(queueInfoPerVenueIdResponse, RETRIEVE_QUEUES_NAMES_FOR_VENUE_QUEUES);
+
+    }
+
 
     //PRIVATE METHODS
 
@@ -163,13 +217,13 @@ public class QudiniAppResponseDataUtils {
 
         List<String> queueIdentifications = new ArrayList<>();
 
-        List<Integer> listIds = JsonPath.read(adminQueueResponse, String.format(QUEUE_DETAILS_QUEUE_ID, queueName));
+        List<Integer> listIds = JsonPath.read(adminQueueResponse, String.format(RETRIEVE_QUEUE_DETAILS_QUEUE_ID_FOR_QUEUE_WITH_NAME, queueName));
 
         String id = String.valueOf(listIds.get(0));
 
         log.debug(String.format("Extracting queue Id from the response, found Id: %s", id));
 
-        List<String> listIdentifiers = JsonPath.read(adminQueueResponse, String.format(QUEUE_DETAILS_QUEUE_IDENTIFIER, queueName));
+        List<String> listIdentifiers = JsonPath.read(adminQueueResponse, String.format(RETRIEVE_QUEUE_DETAILS_QUEUE_IDENTIFIER_FOR_QUEUE_WITH_NAME, queueName));
 
         String identifier = listIdentifiers.get(0);
 
