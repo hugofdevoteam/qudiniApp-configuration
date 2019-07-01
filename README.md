@@ -17,19 +17,21 @@ It can also be used by any development team to populate at least the basic data 
 
 first _release candidate_
 
-[x] Be able to create merchant(s), venue(s), queue(s) and product(s)
+-  Be able to create merchant(s), venue(s), queue(s) and product(s)
+
 - [x] Based on static data (standalone)
 - [x] Based on direct method calls (library)
 
-[x] Be able to link products and queues with basic information
-[x] Be able to create a mininal (almost static information) booking widget
-[ ] Be able to perform a dirty (quick) delete - archive merchant without deleting remaining artifacts
-[ ] Be able to delete each artifact created
+- Be able to delete each artifact created
 - [ ] Based on static (standalone)
 - [ ] Based on direct method calls (library)
 
-[x] Add csv expected content (header field name and observations)
-[ ] Add simple example for some library methods
+--##--
+- [x] Be able to link products and queues with basic information 
+- [x] Be able to create a simple (almost static information) booking widget
+- [ ] Be able to perform a dirty (quick) delete - archive merchant without deleting remaining artifacts
+- [x] Add csv expected content (header field name and observations)
+- [ ] Add simple example for some library methods
 
 ## Prerequisites:
 - Java 8
@@ -45,31 +47,37 @@ At the moment there are the following csv files in the project:
 
 ##### Merchants CSV file:
 merchant csv file header fields and observations
-|Field name                 |Observations                                                           |
-|---------------------------|-----------------------------------------------------------------------|
-|**name**                   | The merchant name                                                     |
-|**maxVenues**              | Max venues allowed to the merchant                                    |
-|**templateKey**            |                                                                       |
-|**contractStatusKey**      | Type of contract                                                      |
-|**industrySectorKey**      | Industry sector                                                       |
-|**sizeCategoryKey**        |                                                                       |
-|**salesRegionKey**         |                                                                       |
-|**countryKey**             |                                                                       |
-|**timezoneKey**            |                                                                       |
-|**languageKey**            |                                                                       |
-|**billingTypeKey**         |                                                                       |
-|**salesAssigneeKey**       |                                                                       |
-|**reportWalkoutThreshold** |
+
+
+| Field name                | Observations                                                          |
+| ---------------------     |   -----------------------------------------------------------------   |
+| **name**                  | The merchant name                                                     |
+| **maxVenues**             | Max venues allowed to the merchant                                    |
+| **templateKey**           |                                                                       |
+| **contractStatusKey**     | Type of contract                                                      |
+| **industrySectorKey**     | Industry sector                                                       |
+| **sizeCategoryKey**       |                                                                       |
+| **salesRegionKey**        |                                                                       |
+| **countryKey**            |                                                                       |
+| **timezoneKey**           |                                                                       |
+| **languageKey**           |                                                                       |
+| **billingTypeKey**        |                                                                       |
+| **salesAssigneeKey**      |                                                                       |
+| **reportWalkoutThreshold**|
 
 ##### Venues CSV file:
 venues csv file header fields and observations
+
+
 |Field name                 |Observations                                                           |
-|---------------------------|-----------------------------------------------------------------------|
-|**merchantName**           |                                                                       |
-|**venueName**              |                                                                       |
+| ---------------------     | ---------------------------------------------------------------       |
+| **merchantName**          |                                                                       |
+| **venueName**             |                                                                       |
 
 ##### Queues CSV file:
 queues csv file header fields and observations
+
+
 |Field name                 |Observations                                                           |
 |---------------------------|-----------------------------------------------------------------------|
 |**merchantName**           |                                                                       |
@@ -79,6 +87,8 @@ queues csv file header fields and observations
 
 ##### Products CSV file:
 products csv file header fields and observations
+
+
 |Field name                 |Observations                                                           |
 |---------------------------|-----------------------------------------------------------------------|
 |**merchantName**           |                                                                       |
@@ -93,6 +103,8 @@ products csv file header fields and observations
 
 ##### BookingWidgets CSV file:
 bookingwidgets csv file header fields and observations
+
+
 |Field name                 |Observations                                                           |
 |---------------------------|-----------------------------------------------------------------------|
 |merchantName               |                                                                       |
