@@ -17,7 +17,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.qudini.api.rest.endpoints.Products.ADD_PRODUCT_QUEUES;
+import static com.qudini.api.rest.endpoints.ProductsEndpoints.ADD_PRODUCT_QUEUES;
 import static com.qudini.api.rest.json.paths.QueuePaths.*;
 import static java.lang.Integer.parseInt;
 

@@ -8,10 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.qudini.api.rest.endpoints.MerchantEndpoints.GET_ALL_MERCHANTS_FOR_CONTACT;
-import static com.qudini.api.rest.endpoints.Products.GET_PRODUCTS_FOR_MERCHANT_ID;
+import static com.qudini.api.rest.endpoints.ProductsEndpoints.GET_PRODUCTS_FOR_MERCHANT_ID;
 import static com.qudini.api.rest.endpoints.QueueEndpoints.*;
 import static com.qudini.api.rest.endpoints.VenueEndpoints.GET_VENUE_FOR_MERCHANT_ID;
 import static com.qudini.api.rest.json.paths.MerchantPaths.MERCHANT_ID_WITH_NAME;
+import static com.qudini.api.rest.json.paths.ProductPaths.PRODUCT_AVG_SERVE_TIME_MINUTES_FOR_PRODUCT_NAME;
 import static com.qudini.api.rest.json.paths.ProductPaths.PRODUCT_ID_WITH_NAME;
 import static com.qudini.api.rest.json.paths.QueuePaths.*;
 import static com.qudini.api.rest.json.paths.VenuePaths.VENUES_IDS_FOR_MERCHANT_ID;
@@ -65,6 +66,13 @@ public class QudiniAppResponseDataUtils {
 
     }
 
+    /**
+     * Method that returns the product Id associated to a merchant (id) taking into account the product name
+     *
+     * @param merchantName the name of the merchant
+     * @param productName the name of the product
+     * @return the product id
+     */
     public String getProductIdByProductNameForMerchantId(String merchantName, String productName){
 
         String merchantId = getMerchantId(merchantName);
@@ -72,6 +80,24 @@ public class QudiniAppResponseDataUtils {
         String getProductsForMerchantId = requestSender.sendGet(String.format(GET_PRODUCTS_FOR_MERCHANT_ID, merchantId));
 
         return getProductIdByProductName(getProductsForMerchantId, productName);
+
+    }
+
+    /**
+     * Method that returns the previously configured average serve time in minutes for the product associated with the merchant
+     * taking into account the product name
+     *
+     * @param merchantName the name of the merchant
+     * @param productName the name of the product
+     * @return the previously configured serve time in minutes for the product
+     */
+    public String getProductAverageServeTimeByProductNameForMerchantId(String merchantName, String productName){
+
+        String merchantId = getMerchantId(merchantName);
+
+        String getProductsForMerchantId = requestSender.sendGet(String.format(GET_PRODUCTS_FOR_MERCHANT_ID, merchantId));
+
+        return getProductServeTimeInMinutesByProductName(getProductsForMerchantId, productName);
 
     }
 
@@ -203,13 +229,27 @@ public class QudiniAppResponseDataUtils {
             String productsForMerchantIdResponse,
             String productName) {
 
-        log.info(String.format("Getting product Id for product name: %s", productName));
+        log.debug(String.format("Getting product Id for product name: %s", productName));
 
         List<Integer> ids = JsonPath.read(productsForMerchantIdResponse, String.format(PRODUCT_ID_WITH_NAME, productName));
 
         log.info(String.format("Found the product id [ %s ] matching the product name [ %s ]", ids.toString(), productName));
 
         return ids.get(0).toString();
+
+    }
+
+    private String getProductServeTimeInMinutesByProductName(
+            String productsForMerchantIdResponse,
+            String productName) {
+
+        log.debug(String.format("Getting product average serve time in minutes for product name: %s", productName));
+
+        List<Integer> listOfAvgServeTimeInMinutes = JsonPath.read(productsForMerchantIdResponse, String.format(PRODUCT_AVG_SERVE_TIME_MINUTES_FOR_PRODUCT_NAME, productName));
+
+        log.info(String.format("Found the product serve time in minutes [ %s ] matching the product name [ %s ]", listOfAvgServeTimeInMinutes.toString(), productName));
+
+        return listOfAvgServeTimeInMinutes.get(0).toString();
 
     }
 

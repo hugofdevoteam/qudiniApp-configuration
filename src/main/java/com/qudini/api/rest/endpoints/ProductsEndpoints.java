@@ -1,8 +1,8 @@
 package com.qudini.api.rest.endpoints;
 
-public final class Products {
+public final class ProductsEndpoints {
 
-    private Products() {
+    private ProductsEndpoints() {
     }
 
     public static final String ADD_PRODUCT_QUEUES = "/api/merchant/product";
