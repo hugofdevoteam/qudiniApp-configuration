@@ -7,10 +7,12 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.qudini.api.rest.endpoints.BookingWidgetEndpoints.GET_BOOKING_WIDGETS_FOR_MERCHANT;
 import static com.qudini.api.rest.endpoints.MerchantEndpoints.GET_ALL_MERCHANTS_FOR_CONTACT;
 import static com.qudini.api.rest.endpoints.ProductsEndpoints.GET_PRODUCTS_FOR_MERCHANT_ID;
 import static com.qudini.api.rest.endpoints.QueueEndpoints.*;
 import static com.qudini.api.rest.endpoints.VenueEndpoints.GET_VENUE_FOR_MERCHANT_ID;
+import static com.qudini.api.rest.json.paths.BookingWidgetPaths.GET_BOOKING_WIDGET_ID_FROM_BW_TITLE;
 import static com.qudini.api.rest.json.paths.MerchantPaths.MERCHANT_ID_WITH_NAME;
 import static com.qudini.api.rest.json.paths.ProductPaths.PRODUCT_AVG_SERVE_TIME_MINUTES_FOR_PRODUCT_NAME;
 import static com.qudini.api.rest.json.paths.ProductPaths.PRODUCT_ID_WITH_NAME;
@@ -209,6 +211,45 @@ public class QudiniAppResponseDataUtils {
         log.debug("Extracting the queue names from the queue info per venue response");
 
         return JsonPath.read(queueInfoPerVenueIdResponse, RETRIEVE_QUEUES_NAMES_FOR_VENUE_QUEUES);
+
+    }
+
+    /**
+     * Method that returns the Booking Widget Id for a Booking Widget having a particular title and belonging to a merchant with a known id
+     *
+     * @param merchantId the merchant id
+     * @param title the title of the booking widget
+     * @return the booking widget id
+     */
+    public String getBookingWidgetIdByNameForMerchant(String merchantId, String title){
+
+        String response = getResponseForBookingWidgetsForMerchant(merchantId);
+
+        log.info(String.format("Obtaining the Booking Widget id for Booking Widget with title [ %s ]", title));
+
+        List<Integer> bookingWidgetId = JsonPath.read(response, String.format(GET_BOOKING_WIDGET_ID_FROM_BW_TITLE, title));
+
+        return bookingWidgetId.get(0).toString();
+
+    }
+
+    /**
+     * Method that returns the response containing all the booking widgets information for a merchant with a known id
+     *
+     * @param merchantId the merchant id
+     * @return response as string
+     */
+    public String getResponseForBookingWidgetsForMerchant(String merchantId){
+
+        String endpoint = String.format(GET_BOOKING_WIDGETS_FOR_MERCHANT, merchantId);
+
+        log.info(String.format("Obtaining the booking widgets for merchant id [ %s ]", merchantId));
+
+        String response = requestSender.sendGet(endpoint);
+
+        log.debug(String.format("Obtained the following booking widgets for merchant id [ %s ]: %n%s", merchantId, response));
+
+        return response;
 
     }
 

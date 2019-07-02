@@ -4,8 +4,8 @@ meta:
 
 qudiniAppStaticData:
   baseuri: http://localhost:8080
-  user: "sysadmin"
-  password: "Passphrase01"
+  user: "add_your_user_here"
+  password: "add_your_pass_here"
 
 requestStaticValues:
   defaultCharSet: "UTF-8"

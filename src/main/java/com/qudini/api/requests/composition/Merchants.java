@@ -1,6 +1,7 @@
 package com.qudini.api.requests.composition;
 
 import com.qudini.api.RequestSender;
+import com.qudini.api.requests.utils.QudiniAppResponseDataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -18,11 +19,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.qudini.api.rest.endpoints.MerchantEndpoints.ADD_MERCHANT;
+import static com.qudini.api.rest.endpoints.MerchantEndpoints.ARCHIVE_MERCHANT;
 
 @Slf4j
 public class Merchants {
 
     private RequestSender requestSender;
+    private QudiniAppResponseDataUtils qudiniAppResponseDataUtils;
+
+    private static final String MERCHANTS_DEFAULT_FILE_PATH = "src/main/resources/data/merchants.csv";
 
     private static final String MERCHANT_CSV_HEADER_NAME = "name";
     private static final String MERCHANT_CSV_HEADER_MAX_VENUES = "maxVenues";
@@ -38,15 +43,20 @@ public class Merchants {
     private static final String MERCHANT_CSV_HEADER_SALES_ASSIGNEE_KEY = "salesAssigneeKey";
     private static final String MERCHANT_CSV_HEADER_REPORT_WALKOUT_THRESHOLD = "reportWalkoutThreshold";
 
+    private static final String MERCHANT_ID = "merchantId";
+
     public Merchants(RequestSender requestSender) {
+
         this.requestSender = requestSender;
+        this.qudiniAppResponseDataUtils = new QudiniAppResponseDataUtils(requestSender);
+
     }
 
 
     public void createMerchants()
             throws IOException {
 
-        createMerchants("src/main/resources/data/merchants.csv");
+        createMerchants(MERCHANTS_DEFAULT_FILE_PATH);
 
     }
 
@@ -140,6 +150,44 @@ public class Merchants {
                 "UTF-8");
 
         log.debug(String.format("Obtained response from create merchant: %s", response));
+
+    }
+
+    //DELETE
+
+    public void archiveMerchant() throws IOException {
+        try (
+                Reader reader = Files.newBufferedReader(Paths.get(MERCHANTS_DEFAULT_FILE_PATH));
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withIgnoreHeaderCase()
+                        .withTrim())
+        ) {
+            for (CSVRecord csvRecord : csvParser) {
+
+                archiveMerchant(
+                        csvRecord.get(MERCHANT_CSV_HEADER_NAME));
+
+            }
+        } catch (IOException e) {
+            log.error(String.format("There was a problem accessing or reading the csv file or filepath: %s", MERCHANTS_DEFAULT_FILE_PATH));
+            throw e;
+        }
+    }
+
+    public void archiveMerchant(String merchantName) throws UnsupportedEncodingException {
+
+        String merchantId = qudiniAppResponseDataUtils.getMerchantId(merchantName);
+
+        log.info(String.format("Trying to archive merchant with name [ %s ] and id [ %s ]", merchantName,merchantId));
+
+        List<NameValuePair> paramsAsNameValuePairList = new ArrayList<>();
+
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_ID, merchantId));
+
+        String response = requestSender.sendPost(ARCHIVE_MERCHANT,paramsAsNameValuePairList,"UTF-8");
+
+        log.debug(String.format("Obtained the following response after trying to archive merchant %s: %n%s", merchantName, response));
 
     }
 

@@ -1,9 +1,9 @@
 package com.qudini.api;
 
+import com.qudini.api.http.HttpDeleteWithBody;
 import com.thoughtworks.xstream.core.util.Base64Encoder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
@@ -229,6 +229,30 @@ public class RequestSender {
 
     }
 
+    public String sendDelete(
+            String endpointUri,
+            List<NameValuePair> paramsAsNameValuePair,
+            String charSet) throws UnsupportedEncodingException {
+
+        HttpDeleteWithBody httpDelete = (HttpDeleteWithBody) httpBaseSpecification("deletewithbody", endpointUri, token);
+
+        try {
+            httpDelete.setEntity(new UrlEncodedFormEntity(paramsAsNameValuePair, charSet));
+        } catch (UnsupportedEncodingException e) {
+
+            log.error(String.format("Unsupported encoding for %s", paramsAsNameValuePair
+                    .stream()
+                    .map(p -> new HashMap<String, String>().put(p.getName(), p.getValue()))
+                    .collect(Collectors.toList())
+                    .toString()));
+
+            throw e;
+        }
+
+        return executeRequest(httpDelete, false);
+
+    }
+
 
     // PRIVATE METHODS
 
@@ -326,6 +350,9 @@ public class RequestSender {
                 break;
             case "delete":
                 httpRequestBase = new HttpDelete(url);
+                break;
+            case "deletewithbody":
+                httpRequestBase = new HttpDeleteWithBody(url);
                 break;
             default:
                 String error = "Please use only 'POST, 'PUT', 'GET' or 'DELETE' with this specification";
