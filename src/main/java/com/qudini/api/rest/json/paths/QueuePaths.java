@@ -2,7 +2,8 @@ package com.qudini.api.rest.json.paths;
 
 public final class QueuePaths {
 
-    private QueuePaths(){}
+    private QueuePaths() {
+    }
 
     public static final String QUEUE_DETAILS_SNS_TOPIC_VALUE = "$.queueData.queue.snsTopicArn";
 

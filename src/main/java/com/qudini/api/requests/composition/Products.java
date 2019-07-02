@@ -66,7 +66,7 @@ public class Products {
                         .withFirstRecordAsHeader()
                         .withIgnoreHeaderCase()
                         .withTrim())
-        ){
+        ) {
             for (CSVRecord csvRecord : csvParser) {
 
                 createProductAssociatedToQueues(
@@ -78,10 +78,10 @@ public class Products {
                 );
             }
 
-        }catch (IOException e) {
-                log.error(String.format("There was a problem accessing or reading the csv file or filepath: %s", productsFilePath));
-                throw e;
-            }
+        } catch (IOException e) {
+            log.error(String.format("There was a problem accessing or reading the csv file or filepath: %s", productsFilePath));
+            throw e;
+        }
 
     }
 
@@ -93,7 +93,7 @@ public class Products {
             List<String> bookingFor) {
 
         log.info(String.format("Creating a product for merchant [ %s ] with product name [ %s ]", merchantName, productName));
-        createSimpleProduct(merchantName,productName,averageServeTimeMinutes);
+        createSimpleProduct(merchantName, productName, averageServeTimeMinutes);
 
         JSONObject jsonObject = createProductAssociatedToQueuesPayload(
                 merchantName,
@@ -126,7 +126,7 @@ public class Products {
             String merchantName,
             String productName,
             String averageServeTimeMinutes
-            ){
+    ) {
 
         Integer merchantId = parseInt(qudiniAppResponseDataUtils.getMerchantId(merchantName));
 
@@ -135,7 +135,7 @@ public class Products {
         jsonObject.put(PRODUCT_CSV_HEADER_PRODUCT_NAME, productName);
         jsonObject.put(PRODUCT_CSV_HEADER_AVG_SERVE_TIME_MIN, averageServeTimeMinutes);
         jsonObject.put(PRODUCT_CSV_HEADER_QUEUES, "[]");
-        jsonObject.put(TYPE,"PRODUCT");
+        jsonObject.put(TYPE, "PRODUCT");
 
         requestSender.sendPost(
                 ADD_PRODUCT_QUEUES,
@@ -150,7 +150,7 @@ public class Products {
             String merchantName,
             String productName,
             String averageServeTimeMinutes,
-            List<String> bookingFor){
+            List<String> bookingFor) {
 
         JSONObject jsonPriceObj = new JSONObject();
         jsonPriceObj.put("amount", null);
@@ -171,7 +171,7 @@ public class Products {
         jsonObject.put("colour", null);
         jsonObject.put("priority", 0);
         jsonObject.put("description", null);
-        jsonObject.put(TYPE,"PRODUCT");
+        jsonObject.put(TYPE, "PRODUCT");
         jsonObject.put("price", jsonPriceObj);
 
         return jsonObject;
@@ -183,7 +183,7 @@ public class Products {
             String productName,
             String averageServeTimeMinutes,
             List<String> queuesNames,
-            List<String> bookingFor){
+            List<String> bookingFor) {
 
         JSONObject jsonObject = createProductAssociatedToQueuesPayload(
                 merchantName,
@@ -203,7 +203,7 @@ public class Products {
         return jsonObject;
     }
 
-    private JSONArray createQueuesToProductArray(String merchantName, List<String> queuesNames){
+    private JSONArray createQueuesToProductArray(String merchantName, List<String> queuesNames) {
 
         JSONArray queuesArray = new JSONArray();
 
@@ -211,21 +211,21 @@ public class Products {
 
         List<Integer> venuesIds = qudiniAppResponseDataUtils.getVenuesIdsForMerchantId(merchantId);
 
-        for (Integer venueId : venuesIds){
+        for (Integer venueId : venuesIds) {
 
             String queueInfoResponseFromVenueId = qudiniAppResponseDataUtils.getQueueInfoPerVenueId(String.valueOf(venueId));
 
             List<String> queueNamesFromVenueId = qudiniAppResponseDataUtils.extractQueueNamesOnResponse(queueInfoResponseFromVenueId);
 
-            for (String extractedQueueName: queueNamesFromVenueId){
+            for (String extractedQueueName : queueNamesFromVenueId) {
 
-                if(queuesNames.contains(extractedQueueName)){
+                if (queuesNames.contains(extractedQueueName)) {
 
                     log.info(String.format("List of queues [ %s ] contain the queue name [ %s ] the needed info will be added to the queue array to link it to the product",
                             queuesNames, extractedQueueName));
 
                     //MUST BE EXTRACTED FOR THE extractedQueueName
-                    List<String> queuesIdentifier = JsonPath.read(queueInfoResponseFromVenueId, String.format(RETRIEVE_QUEUE_DETAILS_QUEUE_IDENTIFIER_FOR_QUEUE_WITH_NAME,extractedQueueName));
+                    List<String> queuesIdentifier = JsonPath.read(queueInfoResponseFromVenueId, String.format(RETRIEVE_QUEUE_DETAILS_QUEUE_IDENTIFIER_FOR_QUEUE_WITH_NAME, extractedQueueName));
                     String queueIdentifier = queuesIdentifier.get(0);
 
                     List<Integer> queuesId = JsonPath.read(queueInfoResponseFromVenueId, String.format(RETRIEVE_QUEUE_DETAILS_QUEUE_ID_FOR_QUEUE_WITH_NAME, extractedQueueName));

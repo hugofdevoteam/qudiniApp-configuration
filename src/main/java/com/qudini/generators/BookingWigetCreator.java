@@ -9,7 +9,7 @@ import java.io.IOException;
 import static com.qudini.configuration.GlobalConfiguration.configuration;
 
 @Slf4j
-public class BookingwigetCreator {
+public class BookingWigetCreator {
 
     private static final String APPS_BASE_URI_FROM_CONFIG = configuration.getQudiniAppStaticData().getBaseuri();
     private static final String QUDINIAPP_USER_FROM_CONFIG = configuration.getQudiniAppStaticData().getUser();

@@ -1,6 +1,5 @@
 package com.qudini.api.requests.composition;
 
-import com.jayway.jsonpath.JsonPath;
 import com.qudini.api.RequestSender;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
@@ -19,7 +18,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.qudini.api.rest.endpoints.MerchantEndpoints.ADD_MERCHANT;
-import static com.qudini.api.rest.json.paths.MerchantPaths.MERCHANT_ID_WITH_NAME;
 
 @Slf4j
 public class Merchants {

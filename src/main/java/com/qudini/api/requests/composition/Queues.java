@@ -153,7 +153,7 @@ public class Queues {
             String venueName,
             String queueName,
             String averageServeTime
-            ) throws UnsupportedEncodingException {
+    ) throws UnsupportedEncodingException {
 
         log.debug(String.format("Obtaining venue id from venue name [%s]", venueName));
 
@@ -178,12 +178,11 @@ public class Queues {
 
         log.info(String.format("Calling the endpoint uri [ %s ] to activate the queue for booking in the queue details", CHANGE_QUEUE_DETAILS));
 
-        String response = requestSender.sendPut(CHANGE_QUEUE_DETAILS,formPropertiesForEnableBooking,"UTF-8");
+        String response = requestSender.sendPut(CHANGE_QUEUE_DETAILS, formPropertiesForEnableBooking, "UTF-8");
 
         log.debug(String.format("After changing the queue details obtain the response : %n%s", response));
 
     }
-
 
 
 }

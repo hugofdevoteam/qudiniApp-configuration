@@ -14,7 +14,7 @@ public final class QueueDetails {
             String queueName,
             String averageServeTime, //Supposedly it is the same as averageServeTimeMinutes
             String snsTopicArn
-    ){
+    ) {
 
         List<NameValuePair> paramsAsNameValuePairList = new ArrayList<>();
 

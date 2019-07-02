@@ -33,7 +33,7 @@ public class BookingWidget {
     private static final String BW_CSV_HEADER_VENUES_NAMES = "venueNames";
     private static final String BW_CSV_HEADER_PRODUCTS_NAMES = "productsNames";
 
-    public BookingWidget(RequestSender requestSender, String bwBaseUri){
+    public BookingWidget(RequestSender requestSender, String bwBaseUri) {
 
         this.requestSender = requestSender;
         this.bwBaseURI = bwBaseUri;
@@ -56,7 +56,7 @@ public class BookingWidget {
                         .withFirstRecordAsHeader()
                         .withIgnoreHeaderCase()
                         .withTrim())
-        ){
+        ) {
             for (CSVRecord csvRecord : csvParser) {
 
                 createMinimalBookingWidget(
@@ -68,7 +68,7 @@ public class BookingWidget {
                 );
             }
 
-        }catch (IOException e) {
+        } catch (IOException e) {
             log.error(String.format("There was a problem accessing or reading the csv file or filepath: %s", bookingWidgetFilePath));
             throw e;
         }
@@ -80,18 +80,18 @@ public class BookingWidget {
             String bwBaseUrl,
             String merchantName,
             List<String> venuesNames,  //Note that product and queues that belong to the venues should be linked previously
-            List<String> productsNames){
+            List<String> productsNames) {
 
         String merchantId = qudiniAppResponseDataUtils.getMerchantId(merchantName);
 
         String endpoint = String.format(ADD_BOOKING_WIDGET, merchantId);
 
-        JSONObject minimalConfBwPayload = bookingWidgetSetting.defaultPropertiesForBookingWidgetEnable(title,bwBaseUrl,merchantName,venuesNames,productsNames);
+        JSONObject minimalConfBwPayload = bookingWidgetSetting.defaultPropertiesForBookingWidgetEnable(title, bwBaseUrl, merchantName, venuesNames, productsNames);
 
         log.info(String.format("App is making a call to the resourceUri [%s] to create a new Booking Widget",
                 endpoint));
 
-        String response = requestSender.sendPost(endpoint,"application/json", minimalConfBwPayload.toJSONString(),"UTF-8");
+        String response = requestSender.sendPost(endpoint, "application/json", minimalConfBwPayload.toJSONString(), "UTF-8");
 
         log.debug(String.format("Obtained the following response after creating the booking widget: %n%s", response));
 

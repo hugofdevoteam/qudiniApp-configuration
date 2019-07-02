@@ -25,7 +25,7 @@ public final class BookingWidgetSetting {
             String bwBaseUrl,
             String merchantName,
             List<String> venuesNames,  //Note that product and queues that belong to the venues should be linked previously
-            List<String> productsNames){
+            List<String> productsNames) {
 
         JSONObject bwEnablePayload = staticPropertiesForBookingWidgetEnable();
         bwEnablePayload.put("homeURL", bwBaseUrl);
@@ -39,7 +39,7 @@ public final class BookingWidgetSetting {
 
     }
 
-    public JSONObject staticPropertiesForBookingWidgetEnable(){
+    public JSONObject staticPropertiesForBookingWidgetEnable() {
 
         log.debug("Fetching static json data for Booking Widget setup");
 
@@ -56,7 +56,7 @@ public final class BookingWidgetSetting {
         attributionQuestions.add("In store");
 
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("font" ,"Arial");
+        jsonObject.put("font", "Arial");
         jsonObject.put("headerColor", "#bb222f");
         jsonObject.put("backgroundColor", "#ffffff");
         jsonObject.put("mainTextColor", "#4a4a4a");
@@ -90,7 +90,7 @@ public final class BookingWidgetSetting {
         jsonObject.put("defaultLongitude", 0);
         jsonObject.put("showAttributionQuestion", false);
         jsonObject.put("logo", "public/images/style-template/default-logos/logo_on_primary.png");
-        jsonObject.put("defaultStartDate",epochTime);
+        jsonObject.put("defaultStartDate", epochTime);
         jsonObject.put("minStartDate", epochTime);
         jsonObject.put("attributionQuestions", attributionQuestions);
 
@@ -99,20 +99,20 @@ public final class BookingWidgetSetting {
 
     //PRIVATE METHODS
 
-    private JSONArray populateVenuesArray(String merchantName, List<String> venuesNames){
+    private JSONArray populateVenuesArray(String merchantName, List<String> venuesNames) {
 
         log.debug("Starting to construct the venues object to associate to the booking widget setup");
 
         JSONArray bwVenuesInfo = new JSONArray();
 
-        for(String venueName : venuesNames){
+        for (String venueName : venuesNames) {
 
             Integer venueId = parseInt(qudiniAppResponseDataUtils.getVenueIdByName(merchantName, venueName));
 
             JSONObject bwVenueInfo = new JSONObject();
             bwVenueInfo.put("accessState", "LIVE");
             bwVenueInfo.put("defaultCountryCode", "GB");
-            bwVenueInfo.put("storeId","");
+            bwVenueInfo.put("storeId", "");
             bwVenueInfo.put("name", venueName);
             bwVenueInfo.put("id", venueId);
 
@@ -125,13 +125,13 @@ public final class BookingWidgetSetting {
         return bwVenuesInfo;
     }
 
-    private JSONArray populateProductsArray (String merchantName, List<String> productsNames){
+    private JSONArray populateProductsArray(String merchantName, List<String> productsNames) {
 
         log.debug("Starting to construct the products object to associate to the booking widget setup");
 
         JSONArray bwProductsInfo = new JSONArray();
 
-        for(String productName : productsNames){
+        for (String productName : productsNames) {
 
             Integer productId = parseInt(qudiniAppResponseDataUtils.getProductIdByProductNameForMerchantId(merchantName, productName));
             Integer productAvgServeTimeMin = parseInt(qudiniAppResponseDataUtils.getProductAverageServeTimeByProductNameForMerchantId(merchantName, productName));

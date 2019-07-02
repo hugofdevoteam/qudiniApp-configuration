@@ -23,7 +23,7 @@ public class QudiniAppResponseDataUtils {
 
     private RequestSender requestSender;
 
-    public QudiniAppResponseDataUtils(RequestSender requestSender){
+    public QudiniAppResponseDataUtils(RequestSender requestSender) {
         this.requestSender = requestSender;
     }
 
@@ -70,10 +70,10 @@ public class QudiniAppResponseDataUtils {
      * Method that returns the product Id associated to a merchant (id) taking into account the product name
      *
      * @param merchantName the name of the merchant
-     * @param productName the name of the product
+     * @param productName  the name of the product
      * @return the product id
      */
-    public String getProductIdByProductNameForMerchantId(String merchantName, String productName){
+    public String getProductIdByProductNameForMerchantId(String merchantName, String productName) {
 
         String merchantId = getMerchantId(merchantName);
 
@@ -88,10 +88,10 @@ public class QudiniAppResponseDataUtils {
      * taking into account the product name
      *
      * @param merchantName the name of the merchant
-     * @param productName the name of the product
+     * @param productName  the name of the product
      * @return the previously configured serve time in minutes for the product
      */
-    public String getProductAverageServeTimeByProductNameForMerchantId(String merchantName, String productName){
+    public String getProductAverageServeTimeByProductNameForMerchantId(String merchantName, String productName) {
 
         String merchantId = getMerchantId(merchantName);
 
@@ -106,11 +106,11 @@ public class QudiniAppResponseDataUtils {
      *
      * @return returns list with queue id and queue identifier
      */
-    public List<String> getQueueIdentifications(String venueId, String queueName){
+    public List<String> getQueueIdentifications(String venueId, String queueName) {
 
         log.debug(String.format("Getting queue identifications for queue with name: %s", queueName));
 
-        String endpointUri = String.format(LIST_QUEUES_ADMIN_DATA,venueId);
+        String endpointUri = String.format(LIST_QUEUES_ADMIN_DATA, venueId);
 
         log.info(String.format("Calling the endpoint uri [ %s ] to obtain the queue [ %s ] identifications", endpointUri, queueName));
 
@@ -130,7 +130,7 @@ public class QudiniAppResponseDataUtils {
 
     }
 
-    public String getQueueDetails(String queueIdentifier){
+    public String getQueueDetails(String queueIdentifier) {
 
         log.info(String.format("Getting queue detail for queue with identifier [ %s ]", queueIdentifier));
 
@@ -146,7 +146,7 @@ public class QudiniAppResponseDataUtils {
 
     }
 
-    public String getTopicIdFromQueueDetails(String queueIdentifier){
+    public String getTopicIdFromQueueDetails(String queueIdentifier) {
 
         String response = getQueueDetails(queueIdentifier);
 
@@ -158,7 +158,7 @@ public class QudiniAppResponseDataUtils {
 
     }
 
-    public List<Integer> getVenuesIdsForMerchantId(String merchantId){
+    public List<Integer> getVenuesIdsForMerchantId(String merchantId) {
 
         String endpointUri = String.format(GET_VENUE_FOR_MERCHANT_ID, merchantId);
 
@@ -184,7 +184,7 @@ public class QudiniAppResponseDataUtils {
      * @param venueId the venue Id
      * @return full response
      */
-    public String getQueueInfoPerVenueId(String venueId){
+    public String getQueueInfoPerVenueId(String venueId) {
 
         String endpoint = String.format(QUEUES_INFO_FOR_EACH_VENUE, venueId);
 
@@ -204,7 +204,7 @@ public class QudiniAppResponseDataUtils {
      *
      * @return List of queue names
      */
-    public List<String> extractQueueNamesOnResponse(String queueInfoPerVenueIdResponse){
+    public List<String> extractQueueNamesOnResponse(String queueInfoPerVenueIdResponse) {
 
         log.debug("Extracting the queue names from the queue info per venue response");
 
@@ -253,7 +253,7 @@ public class QudiniAppResponseDataUtils {
 
     }
 
-    private List<String> extractQueueIdentifications(String adminQueueResponse, String queueName){
+    private List<String> extractQueueIdentifications(String adminQueueResponse, String queueName) {
 
         List<String> queueIdentifications = new ArrayList<>();
 
