@@ -155,9 +155,15 @@ public class Merchants {
 
     //DELETE
 
-    public void archiveMerchant() throws IOException {
+    public void archiveMerchants() throws IOException {
+
+        archiveMerchants(MERCHANTS_DEFAULT_FILE_PATH);
+
+    }
+
+    public void archiveMerchants(String merchantsFilePath) throws IOException {
         try (
-                Reader reader = Files.newBufferedReader(Paths.get(MERCHANTS_DEFAULT_FILE_PATH));
+                Reader reader = Files.newBufferedReader(Paths.get(merchantsFilePath));
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                         .withFirstRecordAsHeader()
                         .withIgnoreHeaderCase()

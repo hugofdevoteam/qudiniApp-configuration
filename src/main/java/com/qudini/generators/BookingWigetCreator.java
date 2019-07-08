@@ -6,33 +6,42 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 
-import static com.qudini.configuration.GlobalConfiguration.configuration;
-
 @Slf4j
 public class BookingWigetCreator {
 
-    private static final String APPS_BASE_URI_FROM_CONFIG = configuration.getQudiniAppStaticData().getBaseuri();
-    private static final String QUDINIAPP_USER_FROM_CONFIG = configuration.getQudiniAppStaticData().getUser();
-    private static final String QUDINIAPP_PASSWORD_FROM_CONFIG = configuration.getQudiniAppStaticData().getPassword();
+    private String appsBaseUri;
+    private String qudiniAppUsername;
+    private String qudiniAppPassword;
 
-    public void createMinimalBookingWidget(){
+    public BookingWigetCreator(
+            String appsBaseUri,
+            String username,
+            String password) {
+        this.appsBaseUri = appsBaseUri;
+        this.qudiniAppUsername = username;
+        this.qudiniAppPassword = password;
 
-        RequestSender requestSender = new RequestSender(APPS_BASE_URI_FROM_CONFIG, QUDINIAPP_USER_FROM_CONFIG, QUDINIAPP_PASSWORD_FROM_CONFIG);
+    }
+
+    public void createMinimalBookingWidget() {
+
+        RequestSender requestSender = new RequestSender(appsBaseUri, qudiniAppUsername, qudiniAppPassword);
 
         Merchants merchants = new Merchants(requestSender);
         Venues venues = new Venues(requestSender);
         Queues queues = new Queues(requestSender);
         Products products = new Products(requestSender);
-        BookingWidget bookingWidget = new BookingWidget(requestSender, APPS_BASE_URI_FROM_CONFIG);
+        BookingWidget bookingWidget = new BookingWidget(requestSender, appsBaseUri);
 
         try {
             merchants.createMerchants();
             venues.createVenues();
             queues.createQueues();
+            queues.enableBookingWithDefaultQueuesDetailsUsingCSV();
             products.createProductsAssociatedToQueues();
             bookingWidget.createMinimalBookingWidget();
 
-        }catch (IOException e) {
+        } catch (IOException e) {
             log.error("There was a I/O problem when performing the data configuration on QudiniApp");
             log.error(e.getMessage());
         }

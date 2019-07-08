@@ -9,15 +9,19 @@ import net.minidev.json.JSONObject;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.qudini.api.rest.endpoints.ProductsEndpoints.ADD_PRODUCT_QUEUES;
+import static com.qudini.api.rest.endpoints.ProductsEndpoints.ADD_OR_REMOVE_PRODUCT_QUEUES;
 import static com.qudini.api.rest.json.paths.QueuePaths.*;
 import static java.lang.Integer.parseInt;
 
@@ -26,6 +30,8 @@ public class Products {
 
     private RequestSender requestSender;
     private QudiniAppResponseDataUtils qudiniAppResponseDataUtils;
+
+    private static final String PRODUCTS_DEFAULT_FILE_PATH = "src/main/resources/data/products.csv";
 
     private static final String PRODUCT_CSV_HEADER_MERCHANT_NAME = "merchantName";
     private static final String PRODUCT_CSV_HEADER_PRODUCT_NAME = "productName";
@@ -50,7 +56,7 @@ public class Products {
     public void createProductsAssociatedToQueues()
             throws IOException {
 
-        createProductsAssociatedToQueues("src/main/resources/data/products.csv");
+        createProductsAssociatedToQueues(PRODUCTS_DEFAULT_FILE_PATH);
 
 
     }
@@ -110,10 +116,10 @@ public class Products {
     public void createProductAssociatedToQueues(String paramsAsJsonString) {
 
         log.info(String.format("App is making a call to the resourceUri [%s] to create a product with the info: %s",
-                ADD_PRODUCT_QUEUES, paramsAsJsonString));
+                ADD_OR_REMOVE_PRODUCT_QUEUES, paramsAsJsonString));
 
         String response = requestSender.sendPost(
-                ADD_PRODUCT_QUEUES,
+                ADD_OR_REMOVE_PRODUCT_QUEUES,
                 "application/json",
                 paramsAsJsonString,
                 "UTF-8");
@@ -138,10 +144,58 @@ public class Products {
         jsonObject.put(TYPE, "PRODUCT");
 
         requestSender.sendPost(
-                ADD_PRODUCT_QUEUES,
+                ADD_OR_REMOVE_PRODUCT_QUEUES,
                 "application/json",
                 jsonObject.toJSONString(),
                 "UTF-8");
+
+    }
+
+    //DELETE PRODUCTS
+
+    public void deleteProducts() throws IOException {
+        deleteProducts(PRODUCTS_DEFAULT_FILE_PATH);
+    }
+
+    public void deleteProducts(String productsFilePath) throws IOException {
+
+        try (
+                Reader reader = Files.newBufferedReader(Paths.get(productsFilePath));
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withIgnoreHeaderCase()
+                        .withTrim())
+        ) {
+            for (CSVRecord csvRecord : csvParser) {
+
+                deleteProduct(
+                        csvRecord.get(PRODUCT_CSV_HEADER_MERCHANT_NAME),
+                        csvRecord.get(PRODUCT_CSV_HEADER_PRODUCT_NAME));
+            }
+
+        } catch (IOException e) {
+            log.error(String.format("There was a problem accessing or reading the csv file or filepath: %s", productsFilePath));
+            throw e;
+        }
+
+    }
+
+    public void deleteProduct(String merchantName, String productName) throws UnsupportedEncodingException {
+
+        String merchantId = qudiniAppResponseDataUtils.getMerchantId(merchantName);
+
+        String productId = qudiniAppResponseDataUtils.getProductIdByProductNameForMerchantId(merchantName, productName);
+
+        log.info(String.format("Trying to delete product with name [ %s ] and id [ %s ]", productName,productId));
+
+        List<NameValuePair> paramsAsNameValuePairList = new ArrayList<>();
+
+        paramsAsNameValuePairList.add(new BasicNameValuePair(PRODUCT_ID, productId));
+        paramsAsNameValuePairList.add(new BasicNameValuePair(MERCHANT_ID, merchantId));
+
+        String response = requestSender.sendDelete(ADD_OR_REMOVE_PRODUCT_QUEUES, paramsAsNameValuePairList, "UTF-8");
+
+        log.debug(String.format("Obtained the following response after trying to delete the product [ %s ]: %n%s", productName, response));
 
     }
 

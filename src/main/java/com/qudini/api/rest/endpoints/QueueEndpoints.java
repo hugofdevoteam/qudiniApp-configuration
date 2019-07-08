@@ -15,4 +15,6 @@ public final class QueueEndpoints {
 
     public static final String QUEUES_INFO_FOR_EACH_VENUE = "/api/v3/venues/%s/queues";
 
+    public static final String ARCHIVE_QUEUE = "/api-queue-archive";
+
 }

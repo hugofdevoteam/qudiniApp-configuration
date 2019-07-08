@@ -19,8 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.qudini.api.rest.endpoints.QueueEndpoints.ADD_VENUE_QUEUE;
-import static com.qudini.api.rest.endpoints.QueueEndpoints.CHANGE_QUEUE_DETAILS;
+import static com.qudini.api.rest.endpoints.QueueEndpoints.*;
 
 
 @Slf4j
@@ -37,6 +36,7 @@ public class Queues {
     private static final String QUEUES_CSV_HEADER_AVG_SERVE_TIME = "averageServeTime";
 
     private static final String VENUE_ID = "venueId";
+    private static final String QUEUE_ID = "queueId";
 
     private static final String DEFAULT_QUEUE_FILE_PATH = "src/main/resources/data/queues.csv";
 
@@ -181,6 +181,56 @@ public class Queues {
         String response = requestSender.sendPut(CHANGE_QUEUE_DETAILS, formPropertiesForEnableBooking, "UTF-8");
 
         log.debug(String.format("After changing the queue details obtain the response : %n%s", response));
+
+    }
+
+    public void archiveQueues() throws IOException {
+        archiveQueues(DEFAULT_QUEUE_FILE_PATH);
+    }
+
+    public void archiveQueues(String queuesFilePath) throws IOException {
+
+        try (
+                Reader reader = Files.newBufferedReader(Paths.get(queuesFilePath));
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withIgnoreHeaderCase()
+                        .withTrim())
+        ) {
+            for (CSVRecord csvRecord : csvParser) {
+
+                archiveQueue(
+                        csvRecord.get(QUEUES_CSV_HEADER_MERCHANT_NAME),
+                        csvRecord.get(QUEUES_CSV_HEADER_VENUE_NAME),
+                        csvRecord.get(QUEUES_CSV_HEADER_QUEUE_NAME));
+
+            }
+        } catch (IOException e) {
+            log.error(String.format("There was a problem with the stated csv file or filepath: %s", queuesFilePath));
+            throw e;
+        }
+    }
+
+    public void archiveQueue(
+            String merchantName,
+            String venueName,
+            String queueName)
+            throws UnsupportedEncodingException {
+
+        String venueId = qudiniAppResponseDataUtils.getVenueIdByName(merchantName, venueName);
+        String queueId = qudiniAppResponseDataUtils.getQueueIdentifications(venueId, queueName).get(0);
+
+        List<NameValuePair> paramsAsNameValuePairList = new ArrayList<>();
+
+        paramsAsNameValuePairList.add(new BasicNameValuePair(QUEUE_ID, queueId));
+
+        log.info(String.format("Trying to archive the queue with name [ %s ] and id [ %s ]", queueName, queueId));
+
+        String response = requestSender.sendPost(ARCHIVE_QUEUE, paramsAsNameValuePairList,"UTF-8");
+
+        log.debug(String.format("Obtained the following response after trying to archive the queue [ %s ]: %n%s", queueName, response));
+
+
 
     }
 

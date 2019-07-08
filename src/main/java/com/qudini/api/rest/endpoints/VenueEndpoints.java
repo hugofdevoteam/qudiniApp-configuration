@@ -9,5 +9,7 @@ public final class VenueEndpoints {
 
     public static final String GET_VENUE_FOR_MERCHANT_ID = "/api/merchant/venues?merchantId=%s";
 
+    public static final String ARCHIVE_VENUE = "/api/venue/archive";
+
 
 }

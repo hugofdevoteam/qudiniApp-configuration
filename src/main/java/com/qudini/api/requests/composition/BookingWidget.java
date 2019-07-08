@@ -103,7 +103,13 @@ public class BookingWidget {
 
     }
 
-    public void deleteBookingWidget() throws IOException {
+    public void deleteBookingWidgets() throws IOException {
+
+        deleteBookingWidgets(BOOKING_WIDGET_DEFAULT_FILE_PATH);
+
+    }
+
+    public void deleteBookingWidgets(String bookingWidgetFilePath) throws IOException {
 
         try (
                 Reader reader = Files.newBufferedReader(Paths.get(BOOKING_WIDGET_DEFAULT_FILE_PATH));
@@ -137,7 +143,7 @@ public class BookingWidget {
 
         String response = requestSender.sendDelete(DELETE_BOOKING_WIDGET, paramsAsNameValuePairList, "UTF-8");
 
-        log.error(String.format("RESPONSE: %s", response));
+        log.debug(String.format("Response from trying to delete Booking Widget with the title [ %s ]: %n%s", title, response));
 
     }
 }

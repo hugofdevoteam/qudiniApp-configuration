@@ -18,12 +18,23 @@ public class GlobalConfiguration {
 
     public static final YamlConfigurations configuration;
 
+    public static final String DATA_ACTION = "com.qudini.DataGenerationAction";
+
     static {
         try {
             setEnv();
         } catch (ExceptionInInitializerError e) {
-            log.error("Test environment could not be initialized");
-            log.error(e.getMessage());
+            initialisationErrorLog(e);
+        }
+
+    }
+
+    static {
+        try {
+            setDataAction();
+        } catch (ExceptionInInitializerError e) {
+            initialisationErrorLog(e);
+            System.exit(1);
         }
 
     }
@@ -73,6 +84,31 @@ public class GlobalConfiguration {
     public static String getEnv(){
 
         return System.getProperty(ENV);
+    }
+
+    private static void setDataAction(){
+
+        String dataGenerationAction = getDataAction();
+
+        if(dataGenerationAction == null || dataGenerationAction.isEmpty()){
+            log.error("Missing data generation action (ADD | REMOVE) mandatory parameter. Aborting data generation");
+            throw new ExceptionInInitializerError("Missing data generation action (ADD | REMOVE) mandatory parameter. Aborting data generation");
+
+        }else if (!dataGenerationAction.equalsIgnoreCase("add") && !dataGenerationAction.equalsIgnoreCase("remove")){
+            log.error("Data generation action only supports the values 'ADD' to create data or 'REMOVE' to remove the data");
+            throw new ExceptionInInitializerError("Data generation action only supports the values 'ADD' to create data or 'REMOVE' to remove the data");
+        }
+    }
+
+    public static String getDataAction(){
+
+        return System.getProperty(DATA_ACTION);
+
+    }
+
+    public static void initialisationErrorLog(ExceptionInInitializerError e){
+        log.error("Data generation could not be initialized due to an unrecoverable error");
+        log.error(e.getMessage());
     }
 
 
