@@ -1,0 +1,3 @@
+merchantName,productName,averageServeTimeMinutes,queues,bookingFor
+QudiniBoldMerchant,QudiniBoldProduct01,10,QudiniBoldQueue01 QudiniBoldQueue03,Booking
+QudiniBoldMerchant,QudiniBoldProduct02,10,QudiniBoldQueue02,Booking

@@ -1,0 +1,11 @@
+meta:
+  configurationVersion: 0.1
+  released: 2019-05-17
+
+qudiniAppStaticData:
+  baseuri: https://localhost:8082/
+  user: "teste"
+  password: "teste"
+
+requestStaticValues:
+  defaultCharSet: "UTF-8"
